@@ -1,0 +1,98 @@
+# Copyright 2020 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+
+package(default_visibility = ["//visibility:public"])
+
+licenses(["notice"])  # Apache 2.0
+
+cc_library(
+    name = "byte_coding",
+    hdrs = ["byte_coding.h"],
+    deps = [
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
+        "@com_google_protobuf//:protobuf_lite",
+    ],
+)
+
+cc_test(
+    name = "byte_coding_test",
+    srcs = ["byte_coding_test.cc"],
+    deps = [
+        ":byte_coding",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
+        "@com_google_googletest//:gtest_main",
+        "@com_google_protobuf//:protobuf_lite",
+    ],
+)
+
+cc_library(
+    name = "bit_packing",
+    hdrs = ["bit_packing.h"],
+    deps = [
+        ":byte_coding",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/base:endian",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+cc_test(
+    name = "bit_packing_test",
+    size = "small",
+    srcs = ["bit_packing_test.cc"],
+    deps = [
+        ":bit_packing",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_binary(
+    name = "bit_packing_benchmark",
+    srcs = ["bit_packing_benchmark.cc"],
+    deps = [
+        ":bit_packing",
+        "@com_google_benchmark//:benchmark_main",
+    ],
+)
+
+cc_library(
+    name = "bitmap",
+    hdrs = ["bitmap.h"],
+    deps = ["@boost//:dynamic_bitset"],
+)
+
+cc_library(
+    name = "rle_bitmap",
+    srcs = ["rle_bitmap.cc"],
+    hdrs = ["rle_bitmap.h"],
+    deps = [
+        ":bit_packing",
+        ":bitmap",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "rle_bitmap_test",
+    srcs = ["rle_bitmap_test.cc"],
+    deps = [
+        ":bitmap",
+        ":rle_bitmap",
+        "@com_google_googletest//:gtest_main",
+    ],
+)

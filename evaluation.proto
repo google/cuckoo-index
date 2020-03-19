@@ -1,0 +1,87 @@
+// Copyright 2020 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     https://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// -----------------------------------------------------------------------------
+// File: evaluation.proto
+// -----------------------------------------------------------------------------
+
+syntax = "proto2";
+
+package ci;
+
+// Statistics about various possible bitmaps created for a CLT. Should not be
+// populated for other index structures.
+//
+// Next tag: 11
+message BitmapStats {
+  optional double density = 1;
+  optional double clustering = 2;
+
+  // Bitmap stats when using `clt::Bitmap64`a.
+  optional int64 bitpacked_size = 3;
+  optional int64 bitpacked_compressed_size = 4;
+
+  // Bitmap stats when using Roaring bitmaps to encode all CLT bitmaps
+  // back-to-back.
+  optional int64 roaring_size = 5;
+  optional int64 roaring_compressed_size = 6;
+
+  // Bitmap stats when using Roaring bitmaps to encode CLT bitmaps
+  // individually.
+  optional int64 roaring_individual_size = 7;
+  optional int64 roaring_individual_compressed_size = 8;
+  // Bitmap stats when using `clt::RleBitmap` to encode all CLT bitmaps
+  // back-to-back.
+  optional int64 rle_size = 9;
+  optional int64 rle_compressed_size = 10;
+}
+
+message EvaluationResults {
+  // A message describing a an evaluation test case.
+  //
+  // Note: We assume there can be no false negatives, as that would lead to
+  //       incorrect results.
+  message TestCase {
+    optional string name = 1;
+    // Number of lookups performed as a part of this test case.
+    optional int64 num_lookups = 2;
+    // Number of cases where we incorrectly marked a data slice (e.g. a stripe)
+    // as active.
+    optional int64 num_false_positives = 3;
+    // Number of cases where we marked a data slice (e.g. a stripe) as inactive.
+    optional int64 num_true_negatives = 4;
+  }
+
+  optional string index_structure = 1;
+
+  optional int64 num_rows_per_stripe = 2;
+
+  optional int64 num_stripes = 3;
+
+  optional string column_name = 4;
+
+  optional string column_type = 5;
+
+  optional int64 column_cardinality = 6;
+
+  optional int64 column_compressed_size_bytes = 10;
+
+  optional int64 index_size_bytes = 7;
+
+  optional int64 index_compressed_size_bytes = 9;
+
+  optional BitmapStats bitmap_stats = 11;
+
+  repeated TestCase test_cases = 8;
+}

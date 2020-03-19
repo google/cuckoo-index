@@ -1,0 +1,262 @@
+# Copyright 2020 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
+package(default_visibility = ["//visibility:public"])
+
+licenses(["notice"])  # Apache 2.0
+
+cc_library(
+    name = "data",
+    srcs = [
+        "data.cc",
+    ],
+    hdrs = [
+        "data.h",
+    ],
+    deps = [
+        "//common:byte_coding",
+        ":evaluation_utils",
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/random",
+        "@com_google_absl//absl/strings",
+        "@csv-parser//:csv-parser",
+        # "@gsl//:gsl_statistics_int",
+    ],
+)
+
+cc_test(
+    name = "data_test",
+    srcs = ["data_test.cc"],
+    deps = [
+        ":data",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "cuckoo_index",
+    srcs = ["cuckoo_index.cc"],
+    hdrs = ["cuckoo_index.h"],
+    deps = [
+        ":cuckoo_kicker",
+        ":cuckoo_utils",
+        ":evaluation_utils",
+        ":fingerprint_store",
+        ":index_structure",
+        "//common:byte_coding",
+        "//common:rle_bitmap",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "cuckoo_index_test",
+    srcs = ["cuckoo_index_test.cc"],
+    deps = [
+        ":cuckoo_index",
+        ":cuckoo_utils",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "cuckoo_kicker",
+    srcs = ["cuckoo_kicker.cc"],
+    hdrs = ["cuckoo_kicker.h"],
+    deps = [
+        ":cuckoo_utils",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/random",
+    ],
+)
+
+cc_test(
+    name = "cuckoo_kicker_test",
+    srcs = ["cuckoo_kicker_test.cc"],
+    deps = [
+        ":cuckoo_kicker",
+        ":cuckoo_utils",
+        "@com_google_absl//absl/types:span",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+proto_library(
+    name = "evaluation_proto",
+    srcs = ["evaluation.proto"],
+)
+
+cc_proto_library(
+    name = "evaluation_cc_proto",
+    deps = [":evaluation_proto"],
+)
+
+cc_library(
+    name = "evaluation_utils",
+    srcs = [
+        "evaluation_utils.cc",
+    ],
+    hdrs = [
+        "evaluation_utils.h",
+    ],
+    deps = [
+        ":evaluation_cc_proto",
+        "//common:bitmap",
+        "//common:rle_bitmap",
+        "@CRoaring//:roaring_cpp",
+        "@boost//:iostreams",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "evaluation_utils_test",
+    srcs = ["evaluation_utils_test.cc"],
+    deps = [
+        ":evaluation_utils",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "cuckoo_utils",
+    srcs = [
+        "cuckoo_utils.cc",
+    ],
+    hdrs = [
+        "cuckoo_utils.h",
+    ],
+    deps = [
+        "//common:bit_packing",
+        "//common:bitmap",
+        "//common:byte_coding",
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/hash:city",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+    ],
+)
+
+cc_test(
+    name = "cuckoo_utils_test",
+    srcs = ["cuckoo_utils_test.cc"],
+    deps = [
+        ":cuckoo_utils",
+        ":evaluation_utils",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "fingerprint_store",
+    srcs = [
+        "fingerprint_store.cc",
+    ],
+    hdrs = [
+        "fingerprint_store.h",
+    ],
+    deps = [
+        ":cuckoo_utils",
+        ":evaluation_utils",
+        "//common:bitmap",
+        "//common:rle_bitmap",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "fingerprint_store_test",
+    srcs = ["fingerprint_store_test.cc"],
+    deps = [
+        ":cuckoo_utils",
+        ":fingerprint_store",
+        "@com_google_absl//absl/types:span",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "index_structure",
+    hdrs = [
+        "index_structure.h",
+    ],
+    deps = [
+        ":data",
+        ":evaluation_cc_proto",
+    ],
+)
+
+cc_library(
+    name = "zone_map",
+    hdrs = [
+        "zone_map.h",
+    ],
+    deps = [
+        ":data",
+        ":evaluation_utils",
+        ":index_structure",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "zone_map_test",
+    srcs = ["zone_map_test.cc"],
+    deps = [
+        ":zone_map",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "evaluator",
+    srcs = ["evaluator.cc"],
+    hdrs = ["evaluator.h"],
+    deps = [
+        ":data",
+        ":evaluation_cc_proto",
+        ":index_structure",
+        "@com_google_absl//absl/random",
+        "@com_google_absl//absl/strings:str_format",
+    ],
+)
+
+cc_binary(
+    name = "evaluate",
+    srcs = ["evaluate.cc"],
+    deps = [
+        ":cuckoo_index",
+        ":cuckoo_utils",
+        ":data",
+        ":evaluation_cc_proto",
+        ":evaluation_utils",
+        ":evaluator",
+        ":index_structure",
+        ":zone_map",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+    ],
+)
