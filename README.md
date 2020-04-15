@@ -133,4 +133,4 @@ bazel run -c opt --cxxopt="-std=c++17" :evaluate -- \
 
 [2] [Zhou et al., Space-Efficient, High-Performance Rank & Select Structures on
 Uncompressed Bit Sequences,
-2013](https://www.cs.cmu.edu/~dga/papers/cuckoo-conext2014.pdf)
+2013](http://www.cs.cmu.edu/~dga/papers/zhou-sea2013.pdf)
