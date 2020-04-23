@@ -27,14 +27,15 @@ cc_library(
         "data.h",
     ],
     deps = [
-        "//common:byte_coding",
         ":evaluation_utils",
+        "//common:byte_coding",
+        "@boost//:math",
+        "@boost//:multiprecision",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/random",
         "@com_google_absl//absl/strings",
         "@csv-parser//:csv-parser",
-        # "@gsl//:gsl_statistics_int",
     ],
 )
 

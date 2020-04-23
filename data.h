@@ -36,6 +36,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "boost/math/tools/univariate_statistics.hpp"
 #include "common/byte_coding.h"
 #include "evaluation_utils.h"
 #include "single_include/csv.hpp"
@@ -129,19 +130,10 @@ class Column {
     max_ = *min_max.second;
 
     // Compute standard moments.
-    // TODO: Re-add GSL.
-    mean_ = 0;
-    skewness_ = 0;
-    kurtosis_ = 0;
-    // mean_ = gsl_stats_int_mean(data_.data(), [>stride=*/1,
-    // /*n=<]data_.size()); variance_ = gsl_stats_int_variance_m(data_.data(),
-    // [>stride=<]1,
-    // [>n=<]data_.size(), mean_);
-    // const double stddev = std::sqrt(variance_);
-    // skewness_ = gsl_stats_int_skew_m_sd(data_.data(), [>stride=<]1,
-    // [>n=<]data_.size(), mean_, stddev);
-    // kurtosis_ = gsl_stats_int_kurtosis_m_sd(data_.data(), [>stride=<]1,
-    // [>n=<]data_.size(), mean_, stddev);
+    mean_ = boost::math::tools::mean(data_);
+    variance_ = boost::math::tools::variance(data_);
+    skewness_ = boost::math::tools::skewness(data_);
+    kurtosis_ = boost::math::tools::kurtosis(data_);
 
     PrintStats();
   }
@@ -251,19 +243,11 @@ class Column {
     max_ = *min_max.second;
 
     // Compute standard moments.
-    // TODO: Re-add GSL.
-    mean_ = 0;
-    skewness_ = 0;
-    kurtosis_ = 0;
-    // mean_ = gsl_stats_int_mean(data_.data(), [>stride=*/1,
-    // /*n=<]data_.size()); variance_ = gsl_stats_int_variance_m(data_.data(),
-    // [>stride=<]1,
-    // [>n=<]data_.size(), mean_);
-    // const double stddev = std::sqrt(variance_);
-    // skewness_ = gsl_stats_int_skew_m_sd(data_.data(), [>stride=<]1,
-    // [>n=<]data_.size(), mean_, stddev);
-    // kurtosis_ = gsl_stats_int_kurtosis_m_sd(data_.data(), [>stride=<]1,
-    // [>n=<]data_.size(), mean_, stddev);
+    mean_ = boost::math::tools::mean(data_);
+    variance_ = boost::math::tools::variance(data_);
+    skewness_ = boost::math::tools::skewness(data_);
+    kurtosis_ = boost::math::tools::kurtosis(data_);
+
     PrintStats();
   }
 
