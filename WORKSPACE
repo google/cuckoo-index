@@ -124,3 +124,13 @@ http_archive(
     strip_prefix = "csv-parser-6fb1f43ad43fc7962baa3b0fe524b282a56ae4b0",
     urls = ["https://github.com/vincentlaucsb/csv-parser/archive/6fb1f43ad43fc7962baa3b0fe524b282a56ae4b0.zip"],
 )
+
+# XOR filter
+# Apache License 2.0
+http_archive(
+    name = "xor_singleheader",
+    build_file = "@//:xor_singleheader.BUILD",
+    sha256 = "c58d0d21404c11ccf509e9435693102ca5806ea75321d39afb894314a882f3a6",
+    strip_prefix = "xor_singleheader-6cea6a4dcf2f18a0e3b9b9e0b94d6012b804ffa1",
+    urls = ["https://github.com/FastFilter/xor_singleheader/archive/6cea6a4dcf2f18a0e3b9b9e0b94d6012b804ffa1.zip"],
+)

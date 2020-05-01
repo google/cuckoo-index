@@ -49,6 +49,49 @@ cc_test(
 )
 
 cc_library(
+    name = "xor_filter",
+    hdrs = [
+        "xor_filter.h",
+    ],
+    deps = [
+        "@com_google_absl//absl/strings",
+        "@xor_singleheader//:xorfilter",
+    ],
+)
+
+cc_test(
+    name = "xor_filter_test",
+    srcs = ["xor_filter_test.cc"],
+    deps = [
+        ":xor_filter",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "per_stripe_xor",
+    hdrs = [
+        "per_stripe_xor.h",
+    ],
+    deps = [
+        ":data",
+        ":evaluation_utils",
+        ":index_structure",
+        ":xor_filter",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "per_stripe_xor_test",
+    srcs = ["per_stripe_xor_test.cc"],
+    deps = [
+        ":per_stripe_xor",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "cuckoo_index",
     srcs = ["cuckoo_index.cc"],
     hdrs = ["cuckoo_index.h"],
