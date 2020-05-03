@@ -49,6 +49,29 @@ cc_test(
 )
 
 cc_library(
+    name = "per_stripe_bloom",
+    hdrs = [
+        "per_stripe_bloom.h",
+    ],
+    deps = [
+        ":data",
+        ":evaluation_utils",
+        ":index_structure",
+        "@com_google_absl//absl/strings",
+        "@leveldb//:util",
+    ],
+)
+
+cc_test(
+    name = "per_stripe_bloom_test",
+    srcs = ["per_stripe_bloom_test.cc"],
+    deps = [
+        ":per_stripe_bloom",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "xor_filter",
     hdrs = [
         "xor_filter.h",

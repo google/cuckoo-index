@@ -134,3 +134,13 @@ http_archive(
     strip_prefix = "xor_singleheader-6cea6a4dcf2f18a0e3b9b9e0b94d6012b804ffa1",
     urls = ["https://github.com/FastFilter/xor_singleheader/archive/6cea6a4dcf2f18a0e3b9b9e0b94d6012b804ffa1.zip"],
 )
+
+# LevelDB (just the Bloom filter)
+# BSD 3-Clause "New" or "Revised" License
+http_archive(
+    name = "leveldb",
+    build_file = "@//:leveldb.BUILD",
+    sha256 = "2d9cc0a0c4bd1a98d6110f1abeb518086d9448ce74a0ee9deb197df4facefb04",
+    strip_prefix = "leveldb-78b39d68c15ba020c0d60a3906fb66dbf1697595",
+    urls = ["https://github.com/google/leveldb/archive/78b39d68c15ba020c0d60a3906fb66dbf1697595.zip"],
+)
