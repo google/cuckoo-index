@@ -65,12 +65,12 @@ Cuckoo Index addresses both of these drawbacks of per-stripe filters.
 
 ## Running experiments
 
-1.  Prepare a data set in a CSV format that you are going to use. One of the
-    data sets we used was the DMV
-    [Vehicle, Snowmobile, and Boat Registrations](https://catalog.data.gov/dataset/vehicle-snowmobile-and-boat-registrations).
+Prepare a data set in a CSV format that you are going to use. One of the data
+sets we used was the DMV
+[Vehicle, Snowmobile, and Boat Registrations](https://catalog.data.gov/dataset/vehicle-snowmobile-and-boat-registrations).
 
-2.  Run the following command, specifying the path to the data file, columns to
-    test and the tests to run.
+For footprint experiments, run the following command, specifying the path to the
+data file, columns to test and the tests to run.
 
 ```
 bazel run -c opt --cxxopt="-std=c++17" :evaluate -- \
@@ -78,6 +78,18 @@ bazel run -c opt --cxxopt="-std=c++17" :evaluate -- \
   --columns_to_test="City,Zip,Color" \
   --test_cases="positive_uniform,positive_distinct,positive_zipf,negative,mixed" \
   --output_csv_path="results.csv"
+```
+
+For lookup performance experiments, run the following command, specifying the
+path to the the data file and columns to test.
+
+**NOTE** You might want to use fewer rows for lookup experiments as the
+benchmarks are quite time-consuming.
+
+```
+bazel run -c opt --cxxopt='-std=c++17' --dynamic_mode=off :lookup_benchmark -- \
+  --input_file_path="Vehicle__Snowmobile__and_Boat_Registrations.csv" \
+  --columns_to_test="City,Zip,Color"
 ```
 
 ## Code Organization
@@ -133,4 +145,4 @@ bazel run -c opt --cxxopt="-std=c++17" :evaluate -- \
 
 [2] [Zhou et al., Space-Efficient, High-Performance Rank & Select Structures on
 Uncompressed Bit Sequences,
-2013](http://www.cs.cmu.edu/~dga/papers/zhou-sea2013.pdf)
+2013](https://www.cs.cmu.edu/~dga/papers/zhou-sea2013.pdf)

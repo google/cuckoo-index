@@ -327,3 +327,20 @@ cc_binary(
         "@com_google_absl//absl/strings:str_format",
     ],
 )
+
+cc_binary(
+    name = "lookup_benchmark",
+    testonly = 1,
+    srcs = ["lookup_benchmark.cc"],
+    deps = [
+        ":cuckoo_index",
+        ":cuckoo_utils",
+        ":index_structure",
+        ":per_stripe_bloom",
+        ":per_stripe_xor",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_benchmark//:benchmark",
+        "@com_google_googletest//:gtest",
+    ],
+)
