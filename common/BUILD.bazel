@@ -73,7 +73,10 @@ cc_binary(
 cc_library(
     name = "bitmap",
     hdrs = ["bitmap.h"],
-    deps = ["@boost//:dynamic_bitset"],
+    deps = [
+        "@boost//:dynamic_bitset",
+        "@com_google_absl//absl/strings",
+    ],
 )
 
 cc_library(

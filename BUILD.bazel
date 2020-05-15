@@ -328,6 +328,22 @@ cc_binary(
     ],
 )
 
+cc_test(
+    name = "bitmap_benchmark_test",
+    srcs = ["bitmap_benchmark_test.cc"],
+    deps = [
+        ":evaluation_utils",
+        "//common:bitmap",
+        "//common:rle_bitmap",
+        "@CRoaring//:roaring_cpp",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+        "@com_google_benchmark//:benchmark",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_binary(
     name = "lookup_benchmark",
     testonly = 1,
