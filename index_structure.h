@@ -61,6 +61,9 @@ class IndexStructureFactory {
   // Creates an index structure for the given `column`.
   virtual IndexStructurePtr Create(const Column& column,
                                    size_t num_rows_per_stripe) const = 0;
+
+  // Returns the name of the index that can be created using the factory.
+  virtual std::string index_name() const = 0;
 };
 
 }  // namespace ci

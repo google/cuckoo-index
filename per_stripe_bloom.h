@@ -111,6 +111,11 @@ class PerStripeBloomFactory : public IndexStructureFactory {
     return absl::make_unique<PerStripeBloom>(column.data(), num_rows_per_stripe,
                                              num_bits_per_key_);
   }
+
+  std::string index_name() const override {
+    return std::string("PerStripeBloom/") + std::to_string(num_bits_per_key_);
+  }
+
   const size_t num_bits_per_key_;
 };
 

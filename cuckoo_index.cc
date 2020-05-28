@@ -308,11 +308,14 @@ std::unique_ptr<IndexStructure> CuckooIndexFactory::Create(
 
   // Need to use WrapUnique<>(..) since we're calling a private c'tor.
   return absl::WrapUnique<CuckooIndex>(new CuckooIndex(
-      absl::StrCat("CuckooIndex:", cuckoo_alg_, ":", max_load_factor_, ":",
-                   scan_rate_),
-      slots_per_bucket_, std::move(fingerprint_store),
+      index_name(), slots_per_bucket_, std::move(fingerprint_store),
       std::move(use_prefix_bits_bitmap), std::move(slot_bitmaps), data.size(),
       Compress(data).size()));
+}
+
+std::string CuckooIndexFactory::index_name() const {
+  return absl::StrCat("CuckooIndex:", cuckoo_alg_, ":", max_load_factor_, ":",
+                      scan_rate_);
 }
 
 }  // namespace ci

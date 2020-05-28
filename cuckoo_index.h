@@ -112,6 +112,8 @@ class CuckooIndexFactory : public IndexStructureFactory {
   std::unique_ptr<IndexStructure> Create(
       const Column& column, size_t num_rows_per_stripe) const override;
 
+  std::string index_name() const override;
+
  private:
   const CuckooAlgorithm cuckoo_alg_;
   const double max_load_factor_;

@@ -92,6 +92,10 @@ class PerStripeXorFactory : public IndexStructureFactory {
       const Column& column, size_t num_rows_per_stripe) const override {
     return absl::make_unique<PerStripeXor>(column.data(), num_rows_per_stripe);
   }
+
+  std::string index_name() const override {
+    return std::string("PerStripeXor");
+  }
 };
 
 }  // namespace ci
