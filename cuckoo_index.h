@@ -30,6 +30,8 @@ class CuckooIndex : public IndexStructure {
  public:
   bool StripeContains(size_t stripe_id, int value) const override;
 
+  Bitmap64 GetQualifyingStripes(int value, int num_stripes) const override;
+
   std::string name() const override { return name_; }
 
   // Returns the in-memory size of the index structure.

@@ -37,6 +37,19 @@ class IndexStructure {
   // Returns true iff the stripe with `stripe_id` contains the given `value`.
   virtual bool StripeContains(size_t stripe_id, int value) const = 0;
 
+  // Returns a bitmap indicating possibly qualifying stripes for the given
+  // `value`. Probes up to `num_stripes` stripes.
+  virtual Bitmap64 GetQualifyingStripes(int value, int num_stripes) const {
+    // Default implementation for per-stripe index structures.
+    Bitmap64 result(/*size=*/num_stripes);
+    for (size_t stripe_id = 0; stripe_id < static_cast<size_t>(num_stripes);
+         ++stripe_id) {
+      if (StripeContains(stripe_id, value))
+        result.Set(stripe_id, true);
+    }
+    return result;
+  }
+
   // Returns the name of the index structure.
   virtual std::string name() const = 0;
 

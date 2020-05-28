@@ -24,43 +24,40 @@
 // -- --input_file_path='...' --columns_to_test='A,B,C'
 //
 // Example run:
-// Run on (12 X 4500 MHz CPU s)
+// Run on (80 X 3900 MHz CPU s)
 // CPU Caches:
-//   L1 Data 32 KiB (x6)
-//   L1 Instruction 32 KiB (x6)
-//   L2 Unified 1024 KiB (x6)
-//   L3 Unified 8448 KiB (x1)
-// Load Average: 0.70, 0.29, 0.22
-// Benchmark                                                           Time(ns)
+//  L1 Data 32 KiB (x40)
+//  L1 Instruction 32 KiB (x40)
+//  L2 Unified 1024 KiB (x40)
+//  L3 Unified 28160 KiB (x2)
+// Load Average: 0.88, 0.68, 0.71
 // -----------------------------------------------------------------------------
-// PositiveDistinctLookup/country_code/16384/PerStripeBloom/10            14911
-// NegativeLookup/country_code/16384/PerStripeBloom/10                    15312
-// PositiveDistinctLookup/country_code/16384/CLTSecondary/10               5752
-// NegativeLookup/country_code/16384/CLTSecondary/10                       6007
-// PositiveDistinctLookup/country_code/16384/CuckooIndex:1:0.49:0.02      25492
-// NegativeLookup/country_code/16384/CuckooIndex:1:0.49:0.02              22125
-// PositiveDistinctLookup/country_code/16384/CuckooIndex:1:0.84:0.02     483760
-// NegativeLookup/country_code/16384/CuckooIndex:1:0.84:0.02             771757
-// PositiveDistinctLookup/country_code/16384/CuckooIndex:1:0.95:0.02     296864
-// NegativeLookup/country_code/16384/CuckooIndex:1:0.95:0.02             674640
-// PositiveDistinctLookup/country_code/16384/CuckooIndex:1:0.98:0.02     280902
-// NegativeLookup/country_code/16384/CuckooIndex:1:0.98:0.02             766191
-// PositiveDistinctLookup/country_code/16384/PerStripeXor                  1830
-// NegativeLookup/country_code/16384/PerStripeXor                          1833
-// PositiveDistinctLookup/country_code/65536/PerStripeBloom/10             3820
-// NegativeLookup/country_code/65536/PerStripeBloom/10                     3804
-// PositiveDistinctLookup/country_code/65536/CLTSecondary/10               1444
-// NegativeLookup/country_code/65536/CLTSecondary/10                       1453
-// PositiveDistinctLookup/country_code/65536/CuckooIndex:1:0.49:0.02       6010
-// NegativeLookup/country_code/65536/CuckooIndex:1:0.49:0.02               5458
-// PositiveDistinctLookup/country_code/65536/CuckooIndex:1:0.84:0.02     143072
-// NegativeLookup/country_code/65536/CuckooIndex:1:0.84:0.02             240090
-// PositiveDistinctLookup/country_code/65536/CuckooIndex:1:0.95:0.02      79689
-// NegativeLookup/country_code/65536/CuckooIndex:1:0.95:0.02             183355
-// PositiveDistinctLookup/country_code/65536/CuckooIndex:1:0.98:0.02      72320
-// NegativeLookup/country_code/65536/CuckooIndex:1:0.98:0.02             211880
-// PositiveDistinctLookup/country_code/65536/PerStripeXor                   433
-// NegativeLookup/country_code/65536/PerStripeXor                           433
+// Benchmark                                                           Time
+// -----------------------------------------------------------------------------
+// PositiveDistinctLookup/Color/16384/PerStripeBloom/10            28543 ns
+// NegativeLookup/Color/16384/PerStripeBloom/10                    34615 ns
+// PositiveDistinctLookup/Color/16384/CuckooIndex:1:0.49:0.02       2562 ns
+// NegativeLookup/Color/16384/CuckooIndex:1:0.49:0.02                891 ns
+// PositiveDistinctLookup/Color/16384/CuckooIndex:1:0.84:0.02       5240 ns
+// NegativeLookup/Color/16384/CuckooIndex:1:0.84:0.02               5113 ns
+// PositiveDistinctLookup/Color/16384/CuckooIndex:1:0.95:0.02       3845 ns
+// NegativeLookup/Color/16384/CuckooIndex:1:0.95:0.02               4157 ns
+// PositiveDistinctLookup/Color/16384/CuckooIndex:1:0.98:0.02       3396 ns
+// NegativeLookup/Color/16384/CuckooIndex:1:0.98:0.02               3992 ns
+// PositiveDistinctLookup/Color/16384/PerStripeXor                  4768 ns
+// NegativeLookup/Color/16384/PerStripeXor                          3664 ns
+// PositiveDistinctLookup/Color/65536/PerStripeBloom/10             7745 ns
+// NegativeLookup/Color/65536/PerStripeBloom/10                     8782 ns
+// PositiveDistinctLookup/Color/65536/CuckooIndex:1:0.49:0.02       1396 ns
+// NegativeLookup/Color/65536/CuckooIndex:1:0.49:0.02                581 ns
+// PositiveDistinctLookup/Color/65536/CuckooIndex:1:0.84:0.02       4111 ns
+// NegativeLookup/Color/65536/CuckooIndex:1:0.84:0.02               5056 ns
+// PositiveDistinctLookup/Color/65536/CuckooIndex:1:0.95:0.02       2821 ns
+// NegativeLookup/Color/65536/CuckooIndex:1:0.95:0.02               4281 ns
+// PositiveDistinctLookup/Color/65536/CuckooIndex:1:0.98:0.02       2486 ns
+// NegativeLookup/Color/65536/CuckooIndex:1:0.98:0.02               4377 ns
+// PositiveDistinctLookup/Color/65536/PerStripeXor                  1383 ns
+// NegativeLookup/Color/65536/PerStripeXor                           895 ns
 
 #include <cstdlib>
 #include <random>
@@ -100,15 +97,6 @@ bool IsValidSorting(absl::string_view sorting) {
   return values->contains(sorting);
 }
 
-// Probes the first `num_stripes` in the given `index` for the `value`.
-void ProbeAllStripes(const ci::IndexStructure& index, int value,
-                     int num_stripes) {
-  for (size_t stripe_id = 0; stripe_id < static_cast<size_t>(num_stripes);
-       ++stripe_id) {
-    ::benchmark::DoNotOptimize(index.StripeContains(stripe_id, value));
-  }
-}
-
 void BM_PositiveDistinctLookup(const ci::Column& column,
                                std::shared_ptr<ci::IndexStructure> index,
                                const int num_stripes, benchmark::State& state) {
@@ -130,7 +118,8 @@ void BM_PositiveDistinctLookup(const ci::Column& column,
 
   while (state.KeepRunningBatch(values.size())) {
     for (size_t i = 0; i < values.size(); ++i) {
-      ProbeAllStripes(*index, values[i], num_stripes);
+      ::benchmark::DoNotOptimize(index->GetQualifyingStripes(values[i],
+                                                             num_stripes));
     }
   }
 }
@@ -154,7 +143,8 @@ void BM_NegativeLookup(const ci::Column& column,
 
   while (state.KeepRunningBatch(values.size())) {
     for (size_t i = 0; i < values.size(); ++i) {
-      ProbeAllStripes(*index, values[i], num_stripes);
+      ::benchmark::DoNotOptimize(index->GetQualifyingStripes(values[i],
+                                                             num_stripes));
     }
   }
 }

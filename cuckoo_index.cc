@@ -244,6 +244,23 @@ bool CuckooIndex::StripeContains(size_t stripe_id, int value) const {
   return slot_bitmaps_[slot]->Get(stripe_id);
 }
 
+Bitmap64 CuckooIndex::GetQualifyingStripes(int value, int num_stripes) const {
+  const CuckooValue val(value, num_buckets_);
+  size_t slot;
+  if (!BucketContains(val.primary_bucket, val.fingerprint, &slot)) {
+    if (!BucketContains(val.secondary_bucket, val.fingerprint, &slot)) {
+      // Not found. Return empty bitmap.
+      return Bitmap64(/*size=*/0);
+    }
+  }
+  assert(slot_bitmaps_[slot] != nullptr);
+  const Bitmap64& bitmap = *slot_bitmaps_[slot];
+  Bitmap64 result(bitmap.bits());
+  for (const size_t index : bitmap.TrueBitIndices())
+    result.Set(index, true);
+  return result;
+}
+
 bool CuckooIndex::BucketContains(size_t bucket, uint64_t fingerprint,
                                  size_t* slot) const {
   const bool use_prefix_bits = use_prefix_bits_bitmap_ == nullptr
