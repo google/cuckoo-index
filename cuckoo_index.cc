@@ -26,6 +26,7 @@
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 #include "common/byte_coding.h"
+#include "common/profiling.h"
 #include "common/rle_bitmap.h"
 #include "cuckoo_kicker.h"
 #include "cuckoo_utils.h"
@@ -62,6 +63,7 @@ std::vector<Bucket> DistributeByKicking(size_t num_buckets,
                                         size_t slots_per_bucket,
                                         const std::vector<CuckooValue>& values,
                                         bool skew_kicking) {
+  ScopedProfile kicker_insert_values(Counter::Kicking);
   std::vector<Bucket> buckets;
   buckets.reserve(num_buckets);
   for (size_t i = 0; i < num_buckets; ++i)
@@ -205,6 +207,7 @@ std::string Encode(const FingerprintStore& fingerprint_store,
                    const bool prefix_bits_optimization,
                    const Bitmap64Ptr& prefix_bits_bitmap,
                    const std::vector<Bitmap64Ptr>& slot_bitmaps) {
+  ScopedProfile encode_profile(Counter::Encoding);
   ByteBuffer result;
   PutString(fingerprint_store.Encode(), &result);
   const size_t fp_size = result.pos();

@@ -7,6 +7,7 @@ namespace ci {
 
 enum class Counter {
   Kicking,
+  Encoding,
 };
 
 // A simple profiler that can collect stats. Use `ScopedProfile` for registering

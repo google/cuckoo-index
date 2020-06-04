@@ -24,6 +24,9 @@
 // -- --input_file_path=Vehicle__Snowmobile__and_Boat_Registrations.csv
 // --columns_to_test="City"
 //
+// add --benchmark_format=csv --undefok=benchmark_format to output in the CSV
+// format.
+//
 // Example run:
 // Run on (12 X 4500 MHz CPU s)
 // CPU Caches:
@@ -78,6 +81,7 @@
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
 #include "benchmark/benchmark.h"
+#include "common/profiling.h"
 #include "cuckoo_index.h"
 #include "cuckoo_utils.h"
 #include "index_structure.h"
@@ -130,9 +134,18 @@ ci::ColumnPtr CreateSyntheticColumn(size_t size) {
 void BM_BuildTime(const ci::Column& column,
                   const ci::IndexStructureFactory& factory,
                   size_t num_rows_per_stripe, benchmark::State& state) {
-  while (state.KeepRunningBatch(column.num_rows())) {
+  ci::Profiler::GetThreadInstance().Reset();
+
+  for (auto _ : state) {
     benchmark::DoNotOptimize(factory.Create(column, num_rows_per_stripe));
   }
+
+  state.counters["Kicking"] = benchmark::Counter(
+      ci::Profiler::GetThreadInstance().GetValue(ci::Counter::Kicking),
+      benchmark::Counter::kAvgIterations);
+  state.counters["Encoding"] = benchmark::Counter(
+      ci::Profiler::GetThreadInstance().GetValue(ci::Counter::Encoding),
+      benchmark::Counter::kAvgIterations);
 }
 
 int main(int argc, char* argv[]) {
