@@ -80,6 +80,16 @@ cc_library(
 )
 
 cc_library(
+    name = "profiling",
+    srcs = ["profiling.cc"],
+    hdrs = ["profiling.h"],
+    deps = [
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/time",
+    ],
+)
+
+cc_library(
     name = "rle_bitmap",
     srcs = ["rle_bitmap.cc"],
     hdrs = ["rle_bitmap.h"],
