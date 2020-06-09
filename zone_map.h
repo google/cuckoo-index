@@ -112,6 +112,8 @@ class ZoneMapFactory : public IndexStructureFactory {
       const Column& column, size_t num_rows_per_stripe) const override {
     return absl::make_unique<ZoneMap>(column.data(), num_rows_per_stripe);
   }
+
+  std::string index_name() const { return "ZoneMap"; }
 };
 
 }  // namespace ci
