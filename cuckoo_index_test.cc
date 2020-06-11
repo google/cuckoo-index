@@ -51,9 +51,11 @@ ColumnPtr FillColumn(size_t num_rows, size_t num_values) {
 void CheckPositiveLookups(const Column& column, const IndexStructure* index) {
   const size_t num_stripes = column.num_rows() / kNumRowsPerStripe;
   for (const int value : column.distinct_values()) {
-    for (size_t stripe_id = 0; stripe_id < num_stripes; ++stripe_id)
+    const Bitmap64 result = index->GetQualifyingStripes(value, num_stripes);
+    for (size_t stripe_id = 0; stripe_id < num_stripes; ++stripe_id) {
       EXPECT_EQ(column.StripeContains(kNumRowsPerStripe, stripe_id, value),
-                index->StripeContains(stripe_id, value));
+                result.Get(stripe_id));
+    }
   }
 }
 
@@ -65,8 +67,8 @@ double ScanRateNegativeLookups(const Column& column,
   assert(start + kNumNegativeLookups <= std::numeric_limits<int32_t>::max());
   size_t num_false_positive_stripes = 0;
   for (int value = start; value < start + kNumNegativeLookups; ++value) {
-    for (size_t stripe_id = 0; stripe_id < num_stripes; ++stripe_id)
-      if (index->StripeContains(stripe_id, value)) ++num_false_positive_stripes;
+    const Bitmap64 result = index->GetQualifyingStripes(value, num_stripes);
+    num_false_positive_stripes += result.GetOnesCount();
   }
   return static_cast<double>(num_false_positive_stripes) /
          (num_stripes * kNumNegativeLookups);
