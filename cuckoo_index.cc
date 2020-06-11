@@ -252,8 +252,8 @@ Bitmap64 CuckooIndex::GetQualifyingStripes(int value, int num_stripes) const {
   size_t slot;
   if (!BucketContains(val.primary_bucket, val.fingerprint, &slot)) {
     if (!BucketContains(val.secondary_bucket, val.fingerprint, &slot)) {
-      // Not found. Return empty bitmap.
-      return Bitmap64(/*size=*/0);
+      // Not found. Return an empty bitmap.
+      return Bitmap64(/*size=*/num_stripes);
     }
   }
   assert(slot_bitmaps_[slot] != nullptr);
