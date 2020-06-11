@@ -78,6 +78,9 @@ class Bitmap64 {
     for (size_t i = 0; i < bits(); ++i) bitset_[i] = fill_value;
   }
 
+  // Calls copy constructor of underlying boost dynamic bitset.
+  Bitmap64(const Bitmap64& other) : bitset_(other.bitset_) {}
+
   size_t bits() const { return bitset_.size(); }
 
   bool Get(size_t pos) const { return bitset_[pos]; }
