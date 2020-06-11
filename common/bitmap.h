@@ -24,8 +24,8 @@
 #include <memory>
 #include <vector>
 
-#include "boost/dynamic_bitset.hpp"
 #include "absl/strings/string_view.h"
+#include "boost/dynamic_bitset.hpp"
 
 namespace ci {
 

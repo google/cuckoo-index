@@ -128,6 +128,9 @@ class FingerprintStore {
 
   size_t num_slots() const { return num_slots_; }
 
+  // Returns the bitmap indicating empty slots;
+  const Bitmap64& EmptySlotsBitmap() const { return *empty_slots_bitmap_; }
+
   size_t GetSizeInBytes(bool bitmaps_only) const {
     return Encode(bitmaps_only).size();
   }

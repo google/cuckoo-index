@@ -20,6 +20,7 @@
 #define CUCKOO_INDEX_COMMON_RLE_BITMAP_H_
 
 #include <cstdint>
+#include <memory>
 #include <string>
 
 #include "absl/strings/string_view.h"
@@ -27,6 +28,9 @@
 #include "common/bitmap.h"
 
 namespace ci {
+
+class RleBitmap;
+using RleBitmapPtr = std::unique_ptr<RleBitmap>;
 
 class RleBitmap {
  public:
@@ -43,6 +47,8 @@ class RleBitmap {
 
   // Returns the slice of the bitmap from `offset` on of the given `size`.
   Bitmap64 Extract(size_t offset, size_t size) const;
+
+  bool Get(size_t pos) const { return Extract(pos, 1).Get(0); }
 
  private:
   // Extract(..) implementations for the dense and the sparse encoding.

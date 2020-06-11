@@ -206,7 +206,7 @@ std::string Encode(const FingerprintStore& fingerprint_store,
                    const size_t slots_per_bucket,
                    const bool prefix_bits_optimization,
                    const Bitmap64Ptr& prefix_bits_bitmap,
-                   const std::vector<Bitmap64Ptr>& slot_bitmaps) {
+                   const RleBitmap& global_slot_bitmap) {
   ScopedProfile encode_profile(Counter::Encoding);
   ByteBuffer result;
   PutString(fingerprint_store.Encode(), &result);
@@ -226,9 +226,8 @@ std::string Encode(const FingerprintStore& fingerprint_store,
   }
 
   // Add the global bitmap, encoded as RleBitmap.
-  const RleBitmap bitmap(GetGlobalBitmap(slot_bitmaps));
   const size_t before_global_bitmap = result.pos();
-  PutString(bitmap.data(), &result);
+  PutString(global_slot_bitmap.data(), &result);
   std::cout << "Encoded bitmaps: " << result.pos() - before_global_bitmap
             << std::endl;
   return std::string(result.data(), result.pos());
@@ -243,8 +242,14 @@ bool CuckooIndex::StripeContains(size_t stripe_id, int value) const {
     if (!BucketContains(val.secondary_bucket, val.fingerprint, &slot))
       return false;
   }
-  assert(slot_bitmaps_[slot] != nullptr);
-  return slot_bitmaps_[slot]->Get(stripe_id);
+
+  // Inactive slots are empty and their corresponding bitmaps are skipped in the
+  // `global_slot_bitmap_`, so we need to compute the actual slot by subtracting
+  // the number of skipped (empty) slots before `slot`.
+  const size_t actual_slot = GetNthNonEmptyBitmapSlot(slot);
+  const size_t global_slot_bitmap_offset =
+      num_stripes_ * actual_slot + stripe_id;
+  return global_slot_bitmap_->Get(global_slot_bitmap_offset);
 }
 
 Bitmap64 CuckooIndex::GetQualifyingStripes(int value,
@@ -257,9 +262,10 @@ Bitmap64 CuckooIndex::GetQualifyingStripes(int value,
       return Bitmap64(/*size=*/num_stripes);
     }
   }
-  assert(slot_bitmaps_[slot] != nullptr);
-  const Bitmap64& bitmap = *slot_bitmaps_[slot];
-  return Bitmap64(bitmap);
+
+  const size_t actual_slot = GetNthNonEmptyBitmapSlot(slot);
+  return global_slot_bitmap_->Extract(/*offset=*/num_stripes_ * actual_slot,
+                                      /*size=*/num_stripes_);
 }
 
 bool CuckooIndex::BucketContains(size_t bucket, uint64_t fingerprint,
@@ -320,15 +326,20 @@ std::unique_ptr<IndexStructure> CuckooIndexFactory::Create(
   auto fingerprint_store = absl::make_unique<FingerprintStore>(
       slot_fingerprints, slots_per_bucket_,
       /*use_rle_to_encode_block_bitmaps=*/false);
+
+  RleBitmapPtr global_slot_bitmap =
+      absl::make_unique<RleBitmap>(GetGlobalBitmap(slot_bitmaps));
+
   const std::string data =
       Encode(*fingerprint_store, slots_per_bucket_, prefix_bits_optimization_,
-             use_prefix_bits_bitmap, slot_bitmaps);
+             use_prefix_bits_bitmap, *global_slot_bitmap);
 
   // Need to use WrapUnique<>(..) since we're calling a private c'tor.
   return absl::WrapUnique<CuckooIndex>(new CuckooIndex(
-      index_name(), slots_per_bucket_, std::move(fingerprint_store),
-      std::move(use_prefix_bits_bitmap), std::move(slot_bitmaps), data.size(),
-      Compress(data).size()));
+      index_name(), /*num_stripes=*/column.num_rows() / num_rows_per_stripe,
+      slots_per_bucket_, std::move(fingerprint_store),
+      std::move(use_prefix_bits_bitmap), std::move(global_slot_bitmap),
+      data.size(), Compress(data).size()));
 }
 
 std::string CuckooIndexFactory::index_name() const {

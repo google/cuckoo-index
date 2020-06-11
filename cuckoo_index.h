@@ -20,6 +20,7 @@
 #define CUCKOO_INDEX_CUCKOO_INDEX_H_
 
 #include "absl/container/flat_hash_map.h"
+#include "common/rle_bitmap.h"
 #include "cuckoo_utils.h"
 #include "fingerprint_store.h"
 #include "index_structure.h"
@@ -51,17 +52,18 @@ class CuckooIndex : public IndexStructure {
  private:
   friend class CuckooIndexFactory;
 
-  CuckooIndex(std::string name, size_t slots_per_bucket,
+  CuckooIndex(std::string name, size_t num_stripes, size_t slots_per_bucket,
               std::unique_ptr<FingerprintStore> fingerprint_store,
               Bitmap64Ptr use_prefix_bits_bitmap,
-              std::vector<Bitmap64Ptr> slot_bitmaps, size_t byte_size,
+              RleBitmapPtr global_slot_bitmap, size_t byte_size,
               size_t compressed_byte_size)
       : name_(name),
+        num_stripes_(num_stripes),
         num_buckets_(fingerprint_store->num_slots() / slots_per_bucket),
         slots_per_bucket_(slots_per_bucket),
         fingerprint_store_(std::move(fingerprint_store)),
         use_prefix_bits_bitmap_(std::move(use_prefix_bits_bitmap)),
-        slot_bitmaps_(std::move(slot_bitmaps)),
+        global_slot_bitmap_(std::move(global_slot_bitmap)),
         byte_size_(byte_size),
         compressed_byte_size_(compressed_byte_size) {
     assert(fingerprint_store_->num_slots() % slots_per_bucket_ == 0);
@@ -72,7 +74,16 @@ class CuckooIndex : public IndexStructure {
   // slot which contains it (one of the `slots_per_bucket_` possible ones).
   bool BucketContains(size_t bucket, uint64_t fingerprint, size_t* slot) const;
 
+  size_t GetNthNonEmptyBitmapSlot(size_t n) const {
+    // Inactive slots are empty and their corresponding bitmaps are skipped in
+    // the `global_slot_bitmap_`, so we need to compute the actual slot by
+    // subtracting the number of skipped (empty) slots before `slot`.
+    return n -
+           fingerprint_store_->EmptySlotsBitmap().GetOnesCountBeforeLimit(n);
+  }
+
   const std::string name_;
+  const size_t num_stripes_;
   const size_t num_buckets_;
   const size_t slots_per_bucket_;
 
@@ -80,8 +91,8 @@ class CuckooIndex : public IndexStructure {
   // Indicates for every bucket whether prefix or suffix bits of hash
   // fingerprints were used.
   const Bitmap64Ptr use_prefix_bits_bitmap_;
-  // For each *active* slot its Bitmap, nullptr otherwise.
-  const std::vector<Bitmap64Ptr> slot_bitmaps_;
+  // Concatenated slot bitmaps for *active* slots.
+  const RleBitmapPtr global_slot_bitmap_;
 
   // The sizes of the encoded data-structures.
   // TODO: after fine-tuning the encodings, actually store the encoded
