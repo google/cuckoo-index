@@ -244,7 +244,8 @@ bool CuckooIndex::StripeContains(size_t stripe_id, int value) const {
   return slot_bitmaps_[slot]->Get(stripe_id);
 }
 
-Bitmap64 CuckooIndex::GetQualifyingStripes(int value, int num_stripes) const {
+Bitmap64 CuckooIndex::GetQualifyingStripes(int value,
+                                           size_t num_stripes) const {
   const CuckooValue val(value, num_buckets_);
   size_t slot;
   if (!BucketContains(val.primary_bucket, val.fingerprint, &slot)) {

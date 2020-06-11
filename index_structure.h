@@ -39,7 +39,9 @@ class IndexStructure {
 
   // Returns a bitmap indicating possibly qualifying stripes for the given
   // `value`. Probes up to `num_stripes` stripes.
-  virtual Bitmap64 GetQualifyingStripes(int value, int num_stripes) const {
+  // Note: classes extending IndexStructure can override this method when they
+  // can provide an optimized approach here (see CuckooIndex for an example).
+  virtual Bitmap64 GetQualifyingStripes(int value, size_t num_stripes) const {
     // Default implementation for per-stripe index structures.
     Bitmap64 result(/*size=*/num_stripes);
     for (size_t stripe_id = 0; stripe_id < static_cast<size_t>(num_stripes);
