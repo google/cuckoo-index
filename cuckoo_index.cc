@@ -258,10 +258,7 @@ Bitmap64 CuckooIndex::GetQualifyingStripes(int value, int num_stripes) const {
   }
   assert(slot_bitmaps_[slot] != nullptr);
   const Bitmap64& bitmap = *slot_bitmaps_[slot];
-  Bitmap64 result(bitmap.bits());
-  for (const size_t index : bitmap.TrueBitIndices())
-    result.Set(index, true);
-  return result;
+  return Bitmap64(bitmap);
 }
 
 bool CuckooIndex::BucketContains(size_t bucket, uint64_t fingerprint,
