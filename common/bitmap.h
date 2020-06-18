@@ -20,6 +20,7 @@
 #define CUCKOO_INDEX_COMMON_BITMAP_H_
 
 #include <cassert>
+#include <cstring>
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -28,6 +29,14 @@
 #include "boost/dynamic_bitset.hpp"
 
 namespace ci {
+
+// Note: Rank implementation is adapted from SuRF:
+// https://github.com/efficient/SuRF/blob/master/include/rank.hpp
+// Like SuRF, we precompute the ranks of bit-blocks of size `kRankBlockSize`
+// (512 by default), which adds around 6% of size overhead.
+
+// Number of bits in a rank block.
+static constexpr size_t kRankBlockSize = 512;
 
 class Bitmap64;
 using Bitmap64Ptr = std::unique_ptr<Bitmap64>;
@@ -85,11 +94,44 @@ class Bitmap64 {
 
   bool Get(size_t pos) const { return bitset_[pos]; }
 
+  // Initializes `rank_lookup_table_`. Precomputes the ranks of bit-blocks of
+  // size `kRankBlockSize`.
+  void InitRankLookupTable() {
+    // Do not build lookup table if there is only a single block.
+    if (bits() <= kRankBlockSize) return;
+
+    const size_t num_rank_blocks = bits() / kRankBlockSize + 1;
+    rank_lookup_table_.resize(num_rank_blocks);
+    size_t cumulative_rank = 0;
+    for (size_t i = 0; i < num_rank_blocks - 1; ++i) {
+      rank_lookup_table_[i] = cumulative_rank;
+      // Add number of set bits of current block to `cumulative_rank`.
+      cumulative_rank +=
+          GetOnesCountInRankBlock(/*rank_block_id=*/i, /*limit_within_block*/
+                                                    kRankBlockSize);
+    }
+    rank_lookup_table_[num_rank_blocks - 1] = cumulative_rank;
+  }
+
+  // Returns rank of `limit`, i.e., the number of set bits in [0, limit).
   size_t GetOnesCountBeforeLimit(size_t limit) const {
     assert(limit <= bits());
-    size_t ones_count = 0;
-    for (size_t i = 0; i < limit; ++i) ones_count += bitset_[i];
-    return ones_count;
+
+    if (limit == 0) return 0;
+
+    if (rank_lookup_table_.empty()) {
+      // No precomputed ranks. Compute rank manually.
+      size_t ones_count = 0;
+      for (size_t i = 0; i < limit; ++i) ones_count += bitset_[i];
+      return ones_count;
+    }
+
+    // Get rank from `rank_lookup_table_` and add rank of last rank block.
+    const size_t last_pos = limit - 1;
+    const size_t rank_block_id = last_pos / kRankBlockSize;
+    const size_t limit_within_block = (last_pos & (kRankBlockSize - 1)) + 1;
+    return rank_lookup_table_[rank_block_id]
+        + GetOnesCountInRankBlock(rank_block_id, limit_within_block);
   }
 
   size_t GetOnesCount() const { return GetOnesCountBeforeLimit(bits()); }
@@ -117,7 +159,23 @@ class Bitmap64 {
   }
 
  private:
+  // Returns the number of set bits in rank block `rank_block_id` before
+  // `limit_within_block`.
+  size_t GetOnesCountInRankBlock(const size_t rank_block_id,
+                                 const size_t limit_within_block) const {
+    const size_t start = rank_block_id * kRankBlockSize;
+    const size_t end = start + limit_within_block;
+    assert(end <= bits());
+    size_t ones_count = 0;
+    for (size_t i = start; i < end; ++i) {
+      ones_count += bitset_[i];
+    }
+    return ones_count;
+  }
+
   boost::dynamic_bitset<> bitset_;
+  // Stores precomputed ranks of bit-blocks of size `kRankBlockSize`.
+  std::vector<uint32_t> rank_lookup_table_;
 };
 
 }  // namespace ci

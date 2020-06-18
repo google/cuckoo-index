@@ -153,6 +153,24 @@ TEST(BitmapRank, GetRankRandomBitmap) {
   ASSERT_EQ(GetRank(bitmap, /*idx=*/2), 1);
 }
 
+TEST(BitmapRank, GetRankWithRankLookupTable) {
+  const size_t num_bits = kRankBlockSize * 2 + kRankBlockSize / 10;
+  std::vector<int> bits;
+  bits.resize(num_bits);
+  for (int i = 0; i < num_bits; ++i) {
+    bits[i] = (i % 2 == 0) ? 1 : 0;
+  }
+  Bitmap64 bitmap = CreateBitmap(bits);
+  bitmap.InitRankLookupTable();
+
+  ASSERT_EQ(GetRank(bitmap, /*idx=*/0), 0);
+  ASSERT_EQ(GetRank(bitmap, /*idx=*/kRankBlockSize / 10), 26);
+  ASSERT_EQ(GetRank(bitmap, /*idx=*/kRankBlockSize), 256);
+  ASSERT_EQ(GetRank(bitmap, /*idx=*/num_bits / 2), 269);
+  ASSERT_EQ(GetRank(bitmap, /*idx=*/num_bits - 1), 537);
+  ASSERT_EQ(GetRank(bitmap, /*idx=*/num_bits), 538);
+}
+
 TEST(BitmapSelect, SelectSingleBit) {
   size_t pos;
 
