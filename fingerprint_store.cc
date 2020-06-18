@@ -88,6 +88,7 @@ FingerprintStore::FingerprintStore(const std::vector<Fingerprint>& fingerprints,
   for (size_t i = 0; i < fingerprints.size(); ++i) {
     if (!fingerprints[i].active) empty_slots_bitmap_->Set(i, true);
   }
+  empty_slots_bitmap_->InitRankLookupTable();
   num_stored_fingerprints_ = empty_slots_bitmap_->GetZeroesCount();
 
   // Build a map from fingerprint length to BlockContent.
@@ -366,8 +367,11 @@ void FingerprintStore::CreateAndCompactBlockBitmaps(
     const std::vector<size_t>& lengths,
     absl::flat_hash_map<size_t, BlockContent>* blocks) {
   // Create block bitmap for first block (which cannot be compacted).
-  if (!lengths.empty())
-    block_bitmaps_.push_back(std::move((*blocks)[lengths[0]].block_bitmap));
+  if (!lengths.empty()) {
+    Bitmap64Ptr& first_block_bitmap = (*blocks)[lengths[0]].block_bitmap;
+    first_block_bitmap->InitRankLookupTable();
+    block_bitmaps_.push_back(std::move(first_block_bitmap));
+  }
 
   // Create and compact block bitmaps for all remaining blocks.
   for (size_t i = 1; i < lengths.size(); ++i) {
@@ -383,6 +387,7 @@ void FingerprintStore::CreateAndCompactBlockBitmaps(
           MapBucketIndexToBitInBlockBitmap(bucket_idx, block_bitmaps_.size());
       compacted_bitmap->Set(idx_in_compacted_bitmap, true);
     }
+    compacted_bitmap->InitRankLookupTable();
     block_bitmaps_.push_back(std::move(compacted_bitmap));
   }
 }
