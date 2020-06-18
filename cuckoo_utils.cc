@@ -183,7 +183,7 @@ void FillKicked(absl::Span<const CuckooValue> values,
 }
 
 size_t GetRank(const Bitmap64& bitmap, const size_t idx) {
-  assert(idx < bitmap.bits());
+  assert(idx <= bitmap.bits());
   return bitmap.GetOnesCountBeforeLimit(/*limit=*/idx);
 }
 
