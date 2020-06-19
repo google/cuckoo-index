@@ -160,7 +160,7 @@ TEST(BitmapRank, GetRankWithRankLookupTable) {
   for (size_t i = 0; i < num_bits; ++i) {
     bits[i] = (i % 2 == 0) ? 1 : 0;
   }
-  Bitmap64 bitmap = CreateBitmap(bits);
+  const Bitmap64 bitmap = CreateBitmap(bits);
   Bitmap64 bitmap_with_rank = CreateBitmap(bits);
   bitmap_with_rank.InitRankLookupTable();
 
@@ -262,7 +262,7 @@ TEST(BitmapSerialization, EncodeAndDecodeBitmap) {
 
   std::string encoded;
   Bitmap64::DenseEncode(bitmap, &encoded);
-  Bitmap64 decoded = Bitmap64::DenseDecode(encoded);
+  const Bitmap64 decoded = Bitmap64::DenseDecode(encoded);
 
   ASSERT_EQ(bitmap.bits(), decoded.bits());
 
