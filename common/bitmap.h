@@ -20,6 +20,7 @@
 #define CUCKOO_INDEX_COMMON_BITMAP_H_
 
 #include <cassert>
+#include <cstring>
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -28,6 +29,14 @@
 #include "boost/dynamic_bitset.hpp"
 
 namespace ci {
+
+// Note: Rank implementation is adapted from SuRF:
+// https://github.com/efficient/SuRF/blob/master/include/rank.hpp
+// Like SuRF, we precompute the ranks of bit-blocks of size `kRankBlockSize`
+// (512 by default), which adds around 6% of size overhead.
+
+// Number of bits in a rank block.
+static constexpr size_t kRankBlockSize = 512;
 
 class Bitmap64;
 using Bitmap64Ptr = std::unique_ptr<Bitmap64>;
@@ -54,18 +63,57 @@ class Bitmap64 {
 
   static void DenseEncode(const Bitmap64& bitmap, std::string* out) {
     using Block = boost::dynamic_bitset<>::block_type;
-    size_t size_in_bytes = bitmap.bitset_.num_blocks() * sizeof(Block);
+    const size_t
+        bitmap_size_in_bytes = bitmap.bitset_.num_blocks() * sizeof(Block);
+    const uint32_t num_rank_blocks = bitmap.rank_lookup_table_.size();
+    const size_t rank_size_in_bytes = num_rank_blocks * sizeof(uint32_t);
+    const size_t size_in_bytes = sizeof(uint32_t) // Number of bits.
+        + bitmap_size_in_bytes
+        + sizeof(uint32_t) // Number of rank entries.
+        + rank_size_in_bytes;
+
     if (out->size() < size_in_bytes) out->resize(size_in_bytes);
+
+    // Encode bitmap.
+    const uint32_t num_bits = bitmap.bits();
+    *reinterpret_cast<uint32_t*>(out->data()) = num_bits;
+    size_t pos = sizeof(uint32_t);
     boost::to_block_range(bitmap.bitset_,
-                          reinterpret_cast<Block*>(out->data()));
+                          reinterpret_cast<Block*>(out->data() + pos));
+    pos += bitmap_size_in_bytes;
+
+    // Encode `rank_lookup_table_`.
+    *reinterpret_cast<uint32_t*>(out->data() + pos) = num_rank_blocks;
+    pos += sizeof(uint32_t);
+    std::memcpy(out->data() + pos,
+                bitmap.rank_lookup_table_.data(),
+                rank_size_in_bytes);
   }
 
   static Bitmap64 DenseDecode(absl::string_view encoded) {
-    using Block = boost::dynamic_bitset<>::block_type;
-    const size_t num_blocks = encoded.size() / sizeof(Block);
-    const Block* begin = reinterpret_cast<const Block*>(encoded.data());
-    Bitmap64 decoded(num_blocks * boost::dynamic_bitset<>::bits_per_block);
+    using DynamicBitset = boost::dynamic_bitset<>;
+    using Block = DynamicBitset::block_type;
+
+    // Decode bitmap.
+    const uint32_t
+        num_bits = *reinterpret_cast<const uint32_t*>(encoded.data());
+    size_t pos = sizeof(uint32_t);
+    const Block* begin = reinterpret_cast<const Block*>(encoded.data() + pos);
+    Bitmap64 decoded(num_bits);
+    size_t num_blocks = std::ceil(static_cast<double>(num_bits)
+                                      / DynamicBitset::bits_per_block);
     boost::from_block_range(begin, begin + num_blocks, decoded.bitset_);
+    pos += num_blocks * sizeof(Block);
+
+    // Decode `rank_lookup_table_`.
+    const uint32_t
+        num_rank_blocks =
+        *reinterpret_cast<const uint32_t*>(encoded.data() + pos);
+    pos += sizeof(uint32_t);
+    decoded.rank_lookup_table_.resize(num_rank_blocks);
+    std::memcpy(decoded.rank_lookup_table_.data(),
+                encoded.data() + pos,
+                num_rank_blocks * sizeof(uint32_t));
 
     return decoded;
   }
@@ -85,11 +133,44 @@ class Bitmap64 {
 
   bool Get(size_t pos) const { return bitset_[pos]; }
 
+  // Initializes `rank_lookup_table_`. Precomputes the ranks of bit-blocks of
+  // size `kRankBlockSize`.
+  void InitRankLookupTable() {
+    // Do not build lookup table if there is only a single block.
+    if (bits() <= kRankBlockSize) return;
+
+    const size_t num_rank_blocks = bits() / kRankBlockSize + 1;
+    rank_lookup_table_.resize(num_rank_blocks);
+    size_t cumulative_rank = 0;
+    for (size_t i = 0; i < num_rank_blocks - 1; ++i) {
+      rank_lookup_table_[i] = cumulative_rank;
+      // Add number of set bits of current block to `cumulative_rank`.
+      cumulative_rank +=
+          GetOnesCountInRankBlock(/*rank_block_id=*/i, /*limit_within_block*/
+                                                    kRankBlockSize);
+    }
+    rank_lookup_table_[num_rank_blocks - 1] = cumulative_rank;
+  }
+
+  // Returns rank of `limit`, i.e., the number of set bits in [0, limit).
   size_t GetOnesCountBeforeLimit(size_t limit) const {
     assert(limit <= bits());
-    size_t ones_count = 0;
-    for (size_t i = 0; i < limit; ++i) ones_count += bitset_[i];
-    return ones_count;
+
+    if (limit == 0) return 0;
+
+    if (rank_lookup_table_.empty()) {
+      // No precomputed ranks. Compute rank manually.
+      size_t ones_count = 0;
+      for (size_t i = 0; i < limit; ++i) ones_count += bitset_[i];
+      return ones_count;
+    }
+
+    // Get rank from `rank_lookup_table_` and add rank of last rank block.
+    const size_t last_pos = limit - 1;
+    const size_t rank_block_id = last_pos / kRankBlockSize;
+    const size_t limit_within_block = (last_pos & (kRankBlockSize - 1)) + 1;
+    return rank_lookup_table_[rank_block_id]
+        + GetOnesCountInRankBlock(rank_block_id, limit_within_block);
   }
 
   size_t GetOnesCount() const { return GetOnesCountBeforeLimit(bits()); }
@@ -117,7 +198,23 @@ class Bitmap64 {
   }
 
  private:
+  // Returns the number of set bits in rank block `rank_block_id` before
+  // `limit_within_block`.
+  size_t GetOnesCountInRankBlock(const size_t rank_block_id,
+                                 const size_t limit_within_block) const {
+    const size_t start = rank_block_id * kRankBlockSize;
+    const size_t end = start + limit_within_block;
+    assert(end <= bits());
+    size_t ones_count = 0;
+    for (size_t i = start; i < end; ++i) {
+      ones_count += bitset_[i];
+    }
+    return ones_count;
+  }
+
   boost::dynamic_bitset<> bitset_;
+  // Stores precomputed ranks of bit-blocks of size `kRankBlockSize`.
+  std::vector<uint32_t> rank_lookup_table_;
 };
 
 }  // namespace ci
