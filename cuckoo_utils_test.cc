@@ -250,4 +250,26 @@ TEST(EmptyBucketsBitmap, GetEmptyBucketsBitmap) {
             CreateBitmap({0}).ToString());
 }
 
+TEST(BitmapSerialization, EncodeAndDecodeBitmap) {
+  const size_t num_bits = kRankBlockSize * 2 + kRankBlockSize / 10;
+  std::vector<int> bits;
+  bits.resize(num_bits);
+  for (size_t i = 0; i < num_bits; ++i) {
+    bits[i] = (i % 2 == 0) ? 1 : 0;
+  }
+  Bitmap64 bitmap = CreateBitmap(bits);
+  bitmap.InitRankLookupTable();
+
+  std::string encoded;
+  Bitmap64::DenseEncode(bitmap, &encoded);
+  Bitmap64 decoded = Bitmap64::DenseDecode(encoded);
+
+  ASSERT_EQ(bitmap.bits(), decoded.bits());
+
+  for (size_t i = 0; i < num_bits; ++i) {
+    ASSERT_EQ(bitmap.Get(i), decoded.Get(i));
+    ASSERT_EQ(GetRank(bitmap, i), GetRank(decoded, i));
+  }
+}
+
 }  // namespace ci

@@ -63,18 +63,57 @@ class Bitmap64 {
 
   static void DenseEncode(const Bitmap64& bitmap, std::string* out) {
     using Block = boost::dynamic_bitset<>::block_type;
-    size_t size_in_bytes = bitmap.bitset_.num_blocks() * sizeof(Block);
+    const size_t
+        bitmap_size_in_bytes = bitmap.bitset_.num_blocks() * sizeof(Block);
+    const uint32_t num_rank_blocks = bitmap.rank_lookup_table_.size();
+    const size_t rank_size_in_bytes = num_rank_blocks * sizeof(uint32_t);
+    const size_t size_in_bytes = sizeof(uint32_t) // Number of bits.
+        + bitmap_size_in_bytes
+        + sizeof(uint32_t) // Number of rank entries.
+        + rank_size_in_bytes;
+
     if (out->size() < size_in_bytes) out->resize(size_in_bytes);
+
+    // Encode bitmap.
+    const uint32_t num_bits = bitmap.bits();
+    *reinterpret_cast<uint32_t*>(out->data()) = num_bits;
+    size_t pos = sizeof(uint32_t);
     boost::to_block_range(bitmap.bitset_,
-                          reinterpret_cast<Block*>(out->data()));
+                          reinterpret_cast<Block*>(out->data() + pos));
+    pos += bitmap_size_in_bytes;
+
+    // Encode `rank_lookup_table_`.
+    *reinterpret_cast<uint32_t*>(out->data() + pos) = num_rank_blocks;
+    pos += sizeof(uint32_t);
+    std::memcpy(out->data() + pos,
+                bitmap.rank_lookup_table_.data(),
+                rank_size_in_bytes);
   }
 
   static Bitmap64 DenseDecode(absl::string_view encoded) {
-    using Block = boost::dynamic_bitset<>::block_type;
-    const size_t num_blocks = encoded.size() / sizeof(Block);
-    const Block* begin = reinterpret_cast<const Block*>(encoded.data());
-    Bitmap64 decoded(num_blocks * boost::dynamic_bitset<>::bits_per_block);
+    using DynamicBitset = boost::dynamic_bitset<>;
+    using Block = DynamicBitset::block_type;
+
+    // Decode bitmap.
+    const uint32_t
+        num_bits = *reinterpret_cast<const uint32_t*>(encoded.data());
+    size_t pos = sizeof(uint32_t);
+    const Block* begin = reinterpret_cast<const Block*>(encoded.data() + pos);
+    Bitmap64 decoded(num_bits);
+    size_t num_blocks = std::ceil(static_cast<double>(num_bits)
+                                      / DynamicBitset::bits_per_block);
     boost::from_block_range(begin, begin + num_blocks, decoded.bitset_);
+    pos += num_blocks * sizeof(Block);
+
+    // Decode `rank_lookup_table_`.
+    const uint32_t
+        num_rank_blocks =
+        *reinterpret_cast<const uint32_t*>(encoded.data() + pos);
+    pos += sizeof(uint32_t);
+    decoded.rank_lookup_table_.resize(num_rank_blocks);
+    std::memcpy(decoded.rank_lookup_table_.data(),
+                encoded.data() + pos,
+                num_rank_blocks * sizeof(uint32_t));
 
     return decoded;
   }
