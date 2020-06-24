@@ -320,6 +320,8 @@ cc_binary(
         ":evaluation_utils",
         ":evaluator",
         ":index_structure",
+        ":per_stripe_bloom",
+        ":per_stripe_xor",
         ":zone_map",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",

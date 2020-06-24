@@ -34,6 +34,8 @@
 #include "evaluation_utils.h"
 #include "evaluator.h"
 #include "index_structure.h"
+#include "per_stripe_bloom.h"
+#include "per_stripe_xor.h"
 #include "zone_map.h"
 
 ABSL_FLAG(std::string, input_file_path, "", "Path to the Capacitor file.");
@@ -110,11 +112,14 @@ int main(int argc, char* argv[]) {
 
   // Define competitors.
   std::vector<std::unique_ptr<ci::IndexStructureFactory>> index_factories;
-  index_factories.push_back(absl::make_unique<ci::ZoneMapFactory>());
   index_factories.push_back(absl::make_unique<ci::CuckooIndexFactory>(
       ci::CuckooAlgorithm::SKEWED_KICKING, /*max_load_factor=*/0.499,
       /*scan_rate=*/0.02, /*slots_per_bucket=*/1,
       /*prefix_bits_optimization=*/false));
+  index_factories.push_back(
+      absl::make_unique<ci::PerStripeBloomFactory>(/*num_bits_per_key=*/10));
+  index_factories.push_back(absl::make_unique<ci::PerStripeXorFactory>());
+  index_factories.push_back(absl::make_unique<ci::ZoneMapFactory>());
 
   // Evaluate competitors.
   ci::Evaluator evaluator;
