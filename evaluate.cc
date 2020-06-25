@@ -125,7 +125,7 @@ int main(int argc, char* argv[]) {
   // Define competitors.
   std::vector<std::unique_ptr<ci::IndexStructureFactory>> index_factories;
   index_factories.push_back(absl::make_unique<ci::CuckooIndexFactory>(
-      ci::CuckooAlgorithm::SKEWED_KICKING, /*max_load_factor=*/0.499,
+      ci::CuckooAlgorithm::SKEWED_KICKING, ci::kMaxLoadFactor1SlotsPerBucket,
       /*scan_rate=*/0.02, /*slots_per_bucket=*/1,
       /*prefix_bits_optimization=*/false));
   index_factories.push_back(
