@@ -38,6 +38,9 @@
 #include "per_stripe_xor.h"
 #include "zone_map.h"
 
+ABSL_FLAG(int, generate_num_values, 100000, "Number of values to generate.");
+ABSL_FLAG(double, ratio_unique_values, 0.01,
+          "Ratio of unique values to generate.");
 ABSL_FLAG(std::string, input_file_path, "", "Path to the Capacitor file.");
 ABSL_FLAG(std::string, output_csv_path, "",
           "Path to write the output CSV file to.");
@@ -70,33 +73,42 @@ static bool IsValidSorting(absl::string_view sorting) {
 int main(int argc, char* argv[]) {
   absl::ParseCommandLine(argc, argv);
 
-  if (absl::GetFlag(FLAGS_input_file_path).empty()) {
-    std::cerr << "You must specify --input_file_path" << std::endl;
-    std::exit(EXIT_FAILURE);
-  }
-
-  std::vector<size_t> num_rows_per_stripe_to_test;
-  for (const std::string num_rows :
-       absl::GetFlag(FLAGS_num_rows_per_stripe_to_test)) {
-    num_rows_per_stripe_to_test.push_back(std::stoull(num_rows));
-  }
-
-  const std::size_t num_lookups = absl::GetFlag(FLAGS_num_lookups);
-  const std::vector<std::string> test_cases = absl::GetFlag(FLAGS_test_cases);
+  const size_t generate_num_values = absl::GetFlag(FLAGS_generate_num_values);
+  const double ratio_unique_values = absl::GetFlag(FLAGS_ratio_unique_values);
+  const std::string input_file_path = absl::GetFlag(FLAGS_input_file_path);
   const std::string output_csv_path = absl::GetFlag(FLAGS_output_csv_path);
   if (output_csv_path.empty()) {
     std::cerr << "You must specify --output_file_path" << std::endl;
     std::exit(EXIT_FAILURE);
   }
+  const std::vector<std::string>
+      columns_to_test = absl::GetFlag(FLAGS_columns_to_test);
+  std::vector<size_t> num_rows_per_stripe_to_test;
+  for (const std::string num_rows :
+      absl::GetFlag(FLAGS_num_rows_per_stripe_to_test)) {
+    num_rows_per_stripe_to_test.push_back(std::stoull(num_rows));
+  }
+  const size_t num_lookups = absl::GetFlag(FLAGS_num_lookups);
+  const std::vector<std::string> test_cases = absl::GetFlag(FLAGS_test_cases);
+  const std::string sorting = absl::GetFlag(FLAGS_sorting);
 
   // Define data.
-  const std::vector<std::string> column_names =
-      absl::GetFlag(FLAGS_columns_to_test);
-  std::unique_ptr<ci::Table> table =
-      ci::Table::FromCsv(absl::GetFlag(FLAGS_input_file_path), column_names);
+  std::unique_ptr<ci::Table> table;
+  if (input_file_path.empty() || columns_to_test.empty()) {
+    std::cerr
+        << "[WARNING] --input_file_path or --columns_to_test not specified, "
+           "generating synthetic data." << std::endl;
+    std::cout << "Generating " << generate_num_values << " values ("
+              << ratio_unique_values * 100 << "% unique)..." << std::endl;
+    table =
+        ci::Table::GenerateUniform(generate_num_values, ratio_unique_values);
+  } else {
+    std::cout << "Loading data from file " << input_file_path << "..."
+              << std::endl;
+    table = ci::Table::FromCsv(input_file_path, columns_to_test);
+  }
 
   // Potentially sort the data.
-  const std::string sorting = absl::GetFlag(FLAGS_sorting);
   if (!IsValidSorting(sorting)) {
     std::cerr << "Invalid sorting method: " << sorting << std::endl;
     std::exit(EXIT_FAILURE);
