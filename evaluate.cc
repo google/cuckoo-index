@@ -41,7 +41,7 @@
 ABSL_FLAG(int, generate_num_values, 100000, "Number of values to generate.");
 ABSL_FLAG(double, ratio_unique_values, 0.01,
           "Ratio of unique values to generate.");
-ABSL_FLAG(std::string, input_file_path, "", "Path to the Capacitor file.");
+ABSL_FLAG(std::string, input_csv_path, "", "Path to the input CSV file.");
 ABSL_FLAG(std::string, output_csv_path, "",
           "Path to write the output CSV file to.");
 ABSL_FLAG(std::vector<std::string>, columns_to_test, {"company_name"},
@@ -75,10 +75,10 @@ int main(int argc, char* argv[]) {
 
   const size_t generate_num_values = absl::GetFlag(FLAGS_generate_num_values);
   const double ratio_unique_values = absl::GetFlag(FLAGS_ratio_unique_values);
-  const std::string input_file_path = absl::GetFlag(FLAGS_input_file_path);
+  const std::string input_csv_path = absl::GetFlag(FLAGS_input_csv_path);
   const std::string output_csv_path = absl::GetFlag(FLAGS_output_csv_path);
   if (output_csv_path.empty()) {
-    std::cerr << "You must specify --output_file_path" << std::endl;
+    std::cerr << "You must specify --output_csv_path" << std::endl;
     std::exit(EXIT_FAILURE);
   }
   const std::vector<std::string>
@@ -94,18 +94,18 @@ int main(int argc, char* argv[]) {
 
   // Define data.
   std::unique_ptr<ci::Table> table;
-  if (input_file_path.empty() || columns_to_test.empty()) {
+  if (input_csv_path.empty() || columns_to_test.empty()) {
     std::cerr
-        << "[WARNING] --input_file_path or --columns_to_test not specified, "
+        << "[WARNING] --input_csv_path or --columns_to_test not specified, "
            "generating synthetic data." << std::endl;
     std::cout << "Generating " << generate_num_values << " values ("
               << ratio_unique_values * 100 << "% unique)..." << std::endl;
     table =
         ci::Table::GenerateUniform(generate_num_values, ratio_unique_values);
   } else {
-    std::cout << "Loading data from file " << input_file_path << "..."
+    std::cout << "Loading data from file " << input_csv_path << "..."
               << std::endl;
-    table = ci::Table::FromCsv(input_file_path, columns_to_test);
+    table = ci::Table::FromCsv(input_csv_path, columns_to_test);
   }
 
   // Potentially sort the data.
