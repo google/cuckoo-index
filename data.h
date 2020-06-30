@@ -464,6 +464,10 @@ class Table {
   std::vector<ColumnPtr> columns_;
 };
 
+// Creates a table with a single column with uniformly distributed values.
+std::unique_ptr<Table> GenerateUniformData(const size_t generate_num_values,
+                                           const size_t num_unique_values);
+
 }  // namespace ci
 
 #endif  // CUCKOO_INDEX_DATA_H_
