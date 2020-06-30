@@ -127,7 +127,11 @@ int main(int argc, char* argv[]) {
   std::vector<std::unique_ptr<ci::IndexStructureFactory>> index_factories;
   index_factories.push_back(absl::make_unique<ci::CuckooIndexFactory>(
       ci::CuckooAlgorithm::SKEWED_KICKING, ci::kMaxLoadFactor1SlotsPerBucket,
-      /*scan_rate=*/0.02, /*slots_per_bucket=*/1,
+      /*scan_rate=*/0.001, /*slots_per_bucket=*/1,
+      /*prefix_bits_optimization=*/false));
+  index_factories.push_back(absl::make_unique<ci::CuckooIndexFactory>(
+      ci::CuckooAlgorithm::SKEWED_KICKING, ci::kMaxLoadFactor1SlotsPerBucket,
+      /*scan_rate=*/0.01, /*slots_per_bucket=*/1,
       /*prefix_bits_optimization=*/false));
   index_factories.push_back(
       absl::make_unique<ci::PerStripeBloomFactory>(/*num_bits_per_key=*/10));
