@@ -284,11 +284,10 @@ class Table {
  public:
   // Creates a table with a single column with uniformly distributed values.
   static std::unique_ptr<Table> GenerateUniform(const size_t generate_num_values,
-                                                const double ratio_unique_values) {
+                                                const size_t num_unique_values) {
     std::mt19937 gen(42);
 
     // Generate unique values.
-    const size_t num_unique_values = generate_num_values * ratio_unique_values;
     std::unordered_set<int> set;
     set.reserve(num_unique_values);
     std::uniform_int_distribution<int>
@@ -299,7 +298,7 @@ class Table {
     // Copy to vector.
     std::vector<int> unique_values(set.begin(), set.end());
 
-    // Draw each unique value once to ensure `ratio_unique_values`. Without
+    // Draw each unique value once to ensure `num_unique_values`. Without
     // this, we might miss out on certain unique values.
     std::vector<int> values(unique_values.begin(), unique_values.end());
 
@@ -318,7 +317,7 @@ class Table {
                                                           generate_num_values
                                                               / 1000,
                                                           "K_val_",
-                                                          ratio_unique_values,
+                                                          num_unique_values,
                                                           "_uniq"), values);
     std::vector<std::unique_ptr<ci::Column>> columns;
     columns.push_back(std::move(column));

@@ -38,9 +38,10 @@
 #include "per_stripe_xor.h"
 #include "zone_map.h"
 
-ABSL_FLAG(int, generate_num_values, 100000, "Number of values to generate.");
-ABSL_FLAG(double, ratio_unique_values, 0.01,
-          "Ratio of unique values to generate.");
+ABSL_FLAG(int, generate_num_values, 100000,
+          "Number of values to generate (number of rows).");
+ABSL_FLAG(int, num_unique_values, 1000,
+          "Number of unique values to generate (cardinality).");
 ABSL_FLAG(std::string, input_csv_path, "", "Path to the input CSV file.");
 ABSL_FLAG(std::string, output_csv_path, "",
           "Path to write the output CSV file to.");
@@ -74,7 +75,7 @@ int main(int argc, char* argv[]) {
   absl::ParseCommandLine(argc, argv);
 
   const size_t generate_num_values = absl::GetFlag(FLAGS_generate_num_values);
-  const double ratio_unique_values = absl::GetFlag(FLAGS_ratio_unique_values);
+  const size_t num_unique_values = absl::GetFlag(FLAGS_num_unique_values);
   const std::string input_csv_path = absl::GetFlag(FLAGS_input_csv_path);
   const std::string output_csv_path = absl::GetFlag(FLAGS_output_csv_path);
   if (output_csv_path.empty()) {
@@ -99,9 +100,10 @@ int main(int argc, char* argv[]) {
         << "[WARNING] --input_csv_path or --columns_to_test not specified, "
            "generating synthetic data." << std::endl;
     std::cout << "Generating " << generate_num_values << " values ("
-              << ratio_unique_values * 100 << "% unique)..." << std::endl;
+              << static_cast<double>(num_unique_values) / generate_num_values
+                  * 100 << "% unique)..." << std::endl;
     table =
-        ci::Table::GenerateUniform(generate_num_values, ratio_unique_values);
+        ci::Table::GenerateUniform(generate_num_values, num_unique_values);
   } else {
     std::cout << "Loading data from file " << input_csv_path << "..."
               << std::endl;
