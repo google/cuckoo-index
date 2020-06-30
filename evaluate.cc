@@ -102,8 +102,7 @@ int main(int argc, char* argv[]) {
     std::cout << "Generating " << generate_num_values << " values ("
               << static_cast<double>(num_unique_values) / generate_num_values
                   * 100 << "% unique)..." << std::endl;
-    table =
-        ci::Table::GenerateUniform(generate_num_values, num_unique_values);
+    table = ci::GenerateUniformData(generate_num_values, num_unique_values);
   } else {
     std::cout << "Loading data from file " << input_csv_path << "..."
               << std::endl;
