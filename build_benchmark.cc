@@ -21,7 +21,7 @@
 //
 // To run the benchmark run:
 // bazel run -c opt --cxxopt='-std=c++17' --dynamic_mode=off :build_benchmark
-// -- --input_file_path=Vehicle__Snowmobile__and_Boat_Registrations.csv
+// -- --input_csv_path=Vehicle__Snowmobile__and_Boat_Registrations.csv
 // --columns_to_test="City"
 //
 // add --benchmark_format=csv --undefok=benchmark_format to output in the CSV
@@ -88,17 +88,14 @@
 #include "per_stripe_bloom.h"
 #include "per_stripe_xor.h"
 
-ABSL_FLAG(std::string, input_file_path, "", "Path to the Capacitor file.");
+ABSL_FLAG(int, generate_num_values, 100000,
+"Number of values to generate (number of rows).");
+ABSL_FLAG(int, num_unique_values, 1000,
+"Number of unique values to generate (cardinality).");
+ABSL_FLAG(std::string, input_csv_path, "", "Path to the input CSV file.");
 ABSL_FLAG(std::vector<std::string>, columns_to_test, {},
           "Comma-separated list of columns to tests, e.g. "
           "'company_name,country_code'.");
-ABSL_FLAG(std::vector<std::string>, num_rows_per_stripe,
-          std::vector<std::string>({absl::StrCat(1ULL << 14),
-                                    absl::StrCat(1ULL << 16)}),
-          "Number of rows per stripe. Defaults to 10,000.");
-ABSL_FLAG(std::vector<std::string>, synthetic_dataset_sizes,
-          std::vector<std::string>({"1000000", "10000000"}),
-          "Sizes of synthetic datasets to test.");
 ABSL_FLAG(std::string, sorting, "NONE",
           "Sorting to apply to the data. Supported values: 'NONE', "
           "'BY_CARDINALITY' (sorts lexicographically, starting with columns "
@@ -113,22 +110,6 @@ bool IsValidSorting(absl::string_view sorting) {
       {kNoSorting, kByCardinalitySorting, kRandomSorting});
 
   return values->contains(sorting);
-}
-
-ci::ColumnPtr CreateSyntheticColumn(size_t size) {
-  std::mt19937 gen(42);
-
-  std::vector<int> values;
-  values.reserve(size);
-  for (size_t i = 0; i < size; ++i) {
-    // Draw value from random (Zipf distributed) offset.
-    // absl::Zipf is used with its default parameters q = 2.0 and v = 1.0.
-    // q (>= 1.0) is what's referred to as the distribution parameter a in other
-    // implementations (e.g., numpy.random.zipf).
-    values.push_back(absl::Zipf(gen, size, /*q=*/2.0));
-  }
-
-  return ci::Column::IntColumn(absl::StrCat("Synthethic_", size), values);
 }
 
 void BM_BuildTime(const ci::Column& column,
@@ -151,28 +132,26 @@ void BM_BuildTime(const ci::Column& column,
 int main(int argc, char* argv[]) {
   absl::ParseCommandLine(argc, argv);
 
-  std::vector<std::unique_ptr<ci::Table>> tables;
+  const size_t generate_num_values = absl::GetFlag(FLAGS_generate_num_values);
+  const size_t num_unique_values = absl::GetFlag(FLAGS_num_unique_values);
+  const std::string input_csv_path = absl::GetFlag(FLAGS_input_csv_path);
+  const std::vector<std::string>
+      columns_to_test = absl::GetFlag(FLAGS_columns_to_test);
 
-  // Potentially add real data.
-  bool runOnRealData = !absl::GetFlag(FLAGS_input_file_path).empty() &&
-                       !absl::GetFlag(FLAGS_columns_to_test).empty();
-  if (runOnRealData) {
-    tables.push_back(ci::Table::FromCsv(absl::GetFlag(FLAGS_input_file_path),
-                                        absl::GetFlag(FLAGS_columns_to_test)));
-  } else {
+  // Define data.
+  std::unique_ptr<ci::Table> table;
+  if (input_csv_path.empty() || columns_to_test.empty()) {
     std::cerr
-        << "[WARNING] --input_file_path or --columns_to_test not specified, "
-           "running synthetic benchmarks only."
-        << std::endl;
-  }
-
-  // Add synthetic data.
-  for (const std::string& dataset_size :
-       absl::GetFlag(FLAGS_synthetic_dataset_sizes)) {
-    std::vector<std::unique_ptr<ci::Column>> columns;
-    columns.push_back(CreateSyntheticColumn(std::stoull(dataset_size)));
-    tables.push_back(ci::Table::Create(
-        /*name=*/"", std::move(columns)));
+        << "[WARNING] --input_csv_path or --columns_to_test not specified, "
+           "generating synthetic data." << std::endl;
+    std::cout << "Generating " << generate_num_values << " values ("
+              << static_cast<double>(num_unique_values) / generate_num_values
+                  * 100 << "% unique)..." << std::endl;
+    table = ci::GenerateUniformData(generate_num_values, num_unique_values);
+  } else {
+    std::cout << "Loading data from file " << input_csv_path << "..."
+              << std::endl;
+    table = ci::Table::FromCsv(input_csv_path, columns_to_test);
   }
 
   // Potentially sort the data.
@@ -184,59 +163,35 @@ int main(int argc, char* argv[]) {
   if (sorting == kByCardinalitySorting) {
     std::cerr << "Sorting the table according to column cardinality..."
               << std::endl;
-    for (std::unique_ptr<ci::Table>& table : tables) {
-      table->SortWithCardinalityKey();
-    }
+    table->SortWithCardinalityKey();
   } else if (sorting == kRandomSorting) {
     std::cerr << "Randomly shuffling the table..." << std::endl;
-    for (std::unique_ptr<ci::Table>& table : tables) {
-      table->Shuffle();
-    }
+    table->Shuffle();
   }
 
   std::vector<std::unique_ptr<ci::IndexStructureFactory>> index_factories;
+  index_factories.push_back(absl::make_unique<ci::CuckooIndexFactory>(
+      ci::CuckooAlgorithm::SKEWED_KICKING, ci::kMaxLoadFactor1SlotsPerBucket,
+      /*scan_rate=*/0.01, /*slots_per_bucket=*/1,
+      /*prefix_bits_optimization=*/false));
   index_factories.push_back(
       absl::make_unique<ci::PerStripeBloomFactory>(/*num_bits_per_key=*/10));
-  index_factories.push_back(absl::make_unique<ci::CuckooIndexFactory>(
-      ci::CuckooAlgorithm::SKEWED_KICKING,
-      /*max_load_factor=*/ci::kMaxLoadFactor1SlotsPerBucket,
-      /*scan_rate=*/0.02, /*slots_per_bucket=*/1,
-      /*prefix_bits_optimization=*/false));
-  index_factories.push_back(absl::make_unique<ci::CuckooIndexFactory>(
-      ci::CuckooAlgorithm::SKEWED_KICKING,
-      /*max_load_factor=*/ci::kMaxLoadFactor2SlotsPerBucket,
-      /*scan_rate=*/0.02, /*slots_per_bucket=*/2,
-      /*prefix_bits_optimization=*/false));
-  index_factories.push_back(absl::make_unique<ci::CuckooIndexFactory>(
-      ci::CuckooAlgorithm::SKEWED_KICKING,
-      /*max_load_factor=*/ci::kMaxLoadFactor4SlotsPerBucket,
-      /*scan_rate=*/0.02, /*slots_per_bucket=*/4,
-      /*prefix_bits_optimization=*/false));
-  index_factories.push_back(absl::make_unique<ci::CuckooIndexFactory>(
-      ci::CuckooAlgorithm::SKEWED_KICKING,
-      /*max_load_factor=*/ci::kMaxLoadFactor8SlotsPerBucket,
-      /*scan_rate=*/0.02, /*slots_per_bucket=*/8,
-      /*prefix_bits_optimization=*/false));
   index_factories.push_back(absl::make_unique<ci::PerStripeXorFactory>());
 
   // Set up the benchmarks.
-  for (const std::unique_ptr<ci::Table>& table : tables) {
-    for (const std::unique_ptr<ci::Column>& column : table->GetColumns()) {
-      for (const std::string& num_rows_per_stripe_string :
-           absl::GetFlag(FLAGS_num_rows_per_stripe)) {
-        size_t num_rows_per_stripe = std::stoull(num_rows_per_stripe_string);
-        for (const std::unique_ptr<ci::IndexStructureFactory>& factory :
-             index_factories) {
-          const std::string benchmark_name =
-              absl::StrFormat(/*format=*/"BuildTime/%s/%d/%s", column->name(),
-                              num_rows_per_stripe, factory->index_name());
-          ::benchmark::RegisterBenchmark(
-              benchmark_name.c_str(),
-              [&column, &factory,
-               num_rows_per_stripe](::benchmark::State& st) -> void {
-                BM_BuildTime(*column, *factory, num_rows_per_stripe, st);
-              });
-        }
+  for (const std::unique_ptr<ci::Column>& column : table->GetColumns()) {
+    for (size_t num_rows_per_stripe : {1ULL << 13, 1ULL << 16}) {
+      for (const std::unique_ptr<ci::IndexStructureFactory>& factory :
+           index_factories) {
+        const std::string benchmark_name =
+            absl::StrFormat(/*format=*/"BuildTime/%s/%d/%s", column->name(),
+                            num_rows_per_stripe, factory->index_name());
+        ::benchmark::RegisterBenchmark(
+            benchmark_name.c_str(),
+            [&column, &factory,
+             num_rows_per_stripe](::benchmark::State& st) -> void {
+              BM_BuildTime(*column, *factory, num_rows_per_stripe, st);
+            });
       }
     }
   }
