@@ -71,7 +71,11 @@
 #include "per_stripe_bloom.h"
 #include "per_stripe_xor.h"
 
-ABSL_FLAG(std::string, input_file_path, "", "Path to the Capacitor file.");
+ABSL_FLAG(int, generate_num_values, 100000,
+"Number of values to generate (number of rows).");
+ABSL_FLAG(int, num_unique_values, 1000,
+"Number of unique values to generate (cardinality).");
+ABSL_FLAG(std::string, input_csv_path, "", "Path to the input CSV file.");
 ABSL_FLAG(std::vector<std::string>, columns_to_test, {},
           "Comma-separated list of columns to tests, e.g. "
           "'company_name,country_code'.");
@@ -151,16 +155,28 @@ void BM_NegativeLookup(const ci::Column& column,
 
 int main(int argc, char* argv[]) {
   absl::ParseCommandLine(argc, argv);
-  if (absl::GetFlag(FLAGS_input_file_path).empty()) {
-    std::cerr << "You must specify --input_file_path" << std::endl;
-    std::exit(EXIT_FAILURE);
-  }
+
+  const size_t generate_num_values = absl::GetFlag(FLAGS_generate_num_values);
+  const size_t num_unique_values = absl::GetFlag(FLAGS_num_unique_values);
+  const std::string input_csv_path = absl::GetFlag(FLAGS_input_csv_path);
+  const std::vector<std::string>
+      columns_to_test = absl::GetFlag(FLAGS_columns_to_test);
 
   // Define data.
-  const std::vector<std::string> column_names =
-      absl::GetFlag(FLAGS_columns_to_test);
-  std::unique_ptr<ci::Table> table =
-      ci::Table::FromCsv(absl::GetFlag(FLAGS_input_file_path), column_names);
+  std::unique_ptr<ci::Table> table;
+  if (input_csv_path.empty() || columns_to_test.empty()) {
+    std::cerr
+        << "[WARNING] --input_csv_path or --columns_to_test not specified, "
+           "generating synthetic data." << std::endl;
+    std::cout << "Generating " << generate_num_values << " values ("
+              << static_cast<double>(num_unique_values) / generate_num_values
+                  * 100 << "% unique)..." << std::endl;
+    table = ci::GenerateUniformData(generate_num_values, num_unique_values);
+  } else {
+    std::cout << "Loading data from file " << input_csv_path << "..."
+              << std::endl;
+    table = ci::Table::FromCsv(input_csv_path, columns_to_test);
+  }
 
   // Potentially sort the data.
   const std::string sorting = absl::GetFlag(FLAGS_sorting);
@@ -178,33 +194,17 @@ int main(int argc, char* argv[]) {
   }
 
   std::vector<std::unique_ptr<ci::IndexStructureFactory>> index_factories;
+  index_factories.push_back(absl::make_unique<ci::CuckooIndexFactory>(
+      ci::CuckooAlgorithm::SKEWED_KICKING, ci::kMaxLoadFactor1SlotsPerBucket,
+      /*scan_rate=*/0.01, /*slots_per_bucket=*/1,
+      /*prefix_bits_optimization=*/false));
   index_factories.push_back(
       absl::make_unique<ci::PerStripeBloomFactory>(/*num_bits_per_key=*/10));
-  index_factories.push_back(absl::make_unique<ci::CuckooIndexFactory>(
-      ci::CuckooAlgorithm::SKEWED_KICKING,
-      /*max_load_factor=*/ci::kMaxLoadFactor1SlotsPerBucket,
-      /*scan_rate=*/0.02, /*slots_per_bucket=*/1,
-      /*prefix_bits_optimization=*/false));
-  index_factories.push_back(absl::make_unique<ci::CuckooIndexFactory>(
-      ci::CuckooAlgorithm::SKEWED_KICKING,
-      /*max_load_factor=*/ci::kMaxLoadFactor2SlotsPerBucket,
-      /*scan_rate=*/0.02, /*slots_per_bucket=*/2,
-      /*prefix_bits_optimization=*/false));
-  index_factories.push_back(absl::make_unique<ci::CuckooIndexFactory>(
-      ci::CuckooAlgorithm::SKEWED_KICKING,
-      /*max_load_factor=*/ci::kMaxLoadFactor4SlotsPerBucket,
-      /*scan_rate=*/0.02, /*slots_per_bucket=*/4,
-      /*prefix_bits_optimization=*/false));
-  index_factories.push_back(absl::make_unique<ci::CuckooIndexFactory>(
-      ci::CuckooAlgorithm::SKEWED_KICKING,
-      /*max_load_factor=*/ci::kMaxLoadFactor8SlotsPerBucket,
-      /*scan_rate=*/0.02, /*slots_per_bucket=*/8,
-      /*prefix_bits_optimization=*/false));
   index_factories.push_back(absl::make_unique<ci::PerStripeXorFactory>());
 
   // Set up the benchmarks.
   for (const std::unique_ptr<ci::Column>& column : table->GetColumns()) {
-    for (size_t num_rows_per_stripe : {1ULL << 14, 1ULL << 16}) {
+    for (size_t num_rows_per_stripe : {1ULL << 13, 1ULL << 16}) {
       for (const std::unique_ptr<ci::IndexStructureFactory>& factory :
            index_factories) {
         std::shared_ptr<ci::IndexStructure> index = absl::WrapUnique(
