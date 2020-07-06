@@ -79,8 +79,6 @@ ABSL_FLAG(std::string, input_csv_path, "", "Path to the input CSV file.");
 ABSL_FLAG(std::vector<std::string>, columns_to_test, {},
           "Comma-separated list of columns to tests, e.g. "
           "'company_name,country_code'.");
-ABSL_FLAG(std::vector<std::string>, num_rows_per_stripe_to_test, {"10000"},
-          "Number of rows per stripe. Defaults to 10,000.");
 ABSL_FLAG(std::string, sorting, "NONE",
           "Sorting to apply to the data. Supported values: 'NONE', "
           "'BY_CARDINALITY' (sorts lexicographically, starting with columns "
