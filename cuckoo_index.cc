@@ -43,6 +43,7 @@ constexpr double kNumBucketsGrowFactor = 1.01;
 // Returns a map from values to their stripe-bitmaps.
 const absl::flat_hash_map<int, Bitmap64Ptr> ValueToStripeBitmaps(
     const Column& column, size_t num_rows_per_stripe) {
+  ScopedProfile profile(Counter::ValueToStripeBitmaps);
   absl::flat_hash_map<int, Bitmap64Ptr> bitmaps;
   // Round down the number of rows to the next multiple of
   // `num_rows_per_stripe`, i.e., ignore the last stripe as elsewhere.
@@ -63,7 +64,6 @@ std::vector<Bucket> DistributeByKicking(size_t num_buckets,
                                         size_t slots_per_bucket,
                                         const std::vector<CuckooValue>& values,
                                         bool skew_kicking) {
-  ScopedProfile kicker_insert_values(Counter::Kicking);
   std::vector<Bucket> buckets;
   buckets.reserve(num_buckets);
   for (size_t i = 0; i < num_buckets; ++i)
@@ -122,6 +122,7 @@ void CreateSlots(double scan_rate, size_t slots_per_bucket,
                  const bool prefix_bits_optimization,
                  Bitmap64Ptr* use_prefix_bits_bitmap,
                  std::vector<Bitmap64Ptr>* slot_bitmaps) {
+  ScopedProfile profile(Counter::CreateSlots);
   const size_t num_buckets = buckets.size();
   const size_t num_slots = num_buckets * slots_per_bucket;
   size_t num_empty_buckets = 0;
@@ -207,7 +208,6 @@ std::string Encode(const FingerprintStore& fingerprint_store,
                    const bool prefix_bits_optimization,
                    const Bitmap64Ptr& prefix_bits_bitmap,
                    const RleBitmap& global_slot_bitmap) {
-  ScopedProfile encode_profile(Counter::Encoding);
   ByteBuffer result;
   PutString(fingerprint_store.Encode(), &result);
   const size_t fp_size = result.pos();
@@ -303,18 +303,21 @@ std::unique_ptr<IndexStructure> CuckooIndexFactory::Create(
                                         slots_per_bucket_, max_load_factor_);
 
   std::vector<Bucket> buckets;
-  while (buckets.empty()) {
-    std::cout << "Attempting to distribute " << distinct_values.size()
-              << " values to " << num_buckets << " buckets with "
-              << slots_per_bucket_ << " slots each. I.e., load-factor: "
-              << static_cast<double>(distinct_values.size()) /
-                     (slots_per_bucket_ * num_buckets)
-              << std::endl;
-    buckets = Distribute(num_buckets, slots_per_bucket_, cuckoo_alg_,
-                         distinct_values);
-    num_buckets =
-        std::max(static_cast<size_t>(num_buckets * kNumBucketsGrowFactor),
-                 num_buckets + 1);
+  {
+    ScopedProfile profile(Counter::DistributeValues);
+    while (buckets.empty()) {
+      std::cout << "Attempting to distribute " << distinct_values.size()
+                << " values to " << num_buckets << " buckets with "
+                << slots_per_bucket_ << " slots each. I.e., load-factor: "
+                << static_cast<double>(distinct_values.size()) /
+                    (slots_per_bucket_ * num_buckets)
+                << std::endl;
+      buckets = Distribute(num_buckets, slots_per_bucket_, cuckoo_alg_,
+                           distinct_values);
+      num_buckets =
+          std::max(static_cast<size_t>(num_buckets * kNumBucketsGrowFactor),
+                   num_buckets + 1);
+    }
   }
 
   std::vector<Fingerprint> slot_fingerprints;
@@ -323,12 +326,20 @@ std::unique_ptr<IndexStructure> CuckooIndexFactory::Create(
   CreateSlots(scan_rate_, slots_per_bucket_, buckets, &value_to_bitmap,
               &slot_fingerprints, prefix_bits_optimization_,
               &use_prefix_bits_bitmap, &slot_bitmaps);
-  auto fingerprint_store = absl::make_unique<FingerprintStore>(
-      slot_fingerprints, slots_per_bucket_,
-      /*use_rle_to_encode_block_bitmaps=*/false);
+  std::unique_ptr<FingerprintStore> fingerprint_store;
+  {
+    ScopedProfile profile(Counter::CreateFingerprintStore);
+    fingerprint_store = absl::make_unique<FingerprintStore>(
+        slot_fingerprints, slots_per_bucket_,
+        /*use_rle_to_encode_block_bitmaps=*/false);
+  }
 
-  RleBitmapPtr global_slot_bitmap =
-      absl::make_unique<RleBitmap>(GetGlobalBitmap(slot_bitmaps));
+  RleBitmapPtr global_slot_bitmap;
+  {
+    ScopedProfile profile(Counter::GetGlobalBitmap);
+    global_slot_bitmap =
+        absl::make_unique<RleBitmap>(GetGlobalBitmap(slot_bitmaps));
+  }
 
   const std::string data =
       Encode(*fingerprint_store, slots_per_bucket_, prefix_bits_optimization_,

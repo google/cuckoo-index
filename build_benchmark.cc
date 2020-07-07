@@ -121,11 +121,20 @@ void BM_BuildTime(const ci::Column& column,
     benchmark::DoNotOptimize(factory.Create(column, num_rows_per_stripe));
   }
 
-  state.counters["Kicking"] = benchmark::Counter(
-      ci::Profiler::GetThreadInstance().GetValue(ci::Counter::Kicking),
+  state.counters["1-ValueToStripeBitmaps"] = benchmark::Counter(
+      ci::Profiler::GetThreadInstance().GetValue(ci::Counter::ValueToStripeBitmaps),
       benchmark::Counter::kAvgIterations);
-  state.counters["Encoding"] = benchmark::Counter(
-      ci::Profiler::GetThreadInstance().GetValue(ci::Counter::Encoding),
+  state.counters["2-DistributeValues"] = benchmark::Counter(
+      ci::Profiler::GetThreadInstance().GetValue(ci::Counter::DistributeValues),
+      benchmark::Counter::kAvgIterations);
+  state.counters["3-CreateSlots"] = benchmark::Counter(
+      ci::Profiler::GetThreadInstance().GetValue(ci::Counter::CreateSlots),
+      benchmark::Counter::kAvgIterations);
+  state.counters["4-CreateFingerprintStore"] = benchmark::Counter(
+      ci::Profiler::GetThreadInstance().GetValue(ci::Counter::CreateFingerprintStore),
+      benchmark::Counter::kAvgIterations);
+  state.counters["5-GetGlobalBitmap"] = benchmark::Counter(
+      ci::Profiler::GetThreadInstance().GetValue(ci::Counter::GetGlobalBitmap),
       benchmark::Counter::kAvgIterations);
 }
 

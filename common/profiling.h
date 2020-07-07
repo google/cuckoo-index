@@ -6,8 +6,11 @@
 namespace ci {
 
 enum class Counter {
-  Kicking,
-  Encoding,
+  ValueToStripeBitmaps,
+  DistributeValues,
+  CreateSlots,
+  CreateFingerprintStore,
+  GetGlobalBitmap
 };
 
 // A simple profiler that can collect stats. Use `ScopedProfile` for registering
