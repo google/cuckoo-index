@@ -34,8 +34,7 @@ using RleBitmapPtr = std::unique_ptr<RleBitmap>;
 
 class RleBitmap {
  public:
-  // By default create skip-offsets stepping over 1024 run-lengths.
-  explicit RleBitmap(const Bitmap64& bitmap, uint32_t skip_offsets_step = 1024);
+  explicit RleBitmap(const Bitmap64& bitmap);
 
   // Forbid copying and moving.
   RleBitmap(const RleBitmap&) = delete;

@@ -24,8 +24,7 @@
 namespace ci {
 
 void CheckBitmap(const Bitmap64& bitmap) {
-  // Set a smaller skip-offsets-step to ensure there are some skip-offsets.
-  const RleBitmap rle_bitmap(bitmap, /*skip_offsets_step=*/10);
+  const RleBitmap rle_bitmap(bitmap);
 
   // For a host of slices, check that Extract(..) fetches the expected bitmap.
   for (size_t offset = 0; offset < bitmap.bits(); ++offset) {

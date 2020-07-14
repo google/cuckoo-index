@@ -18,6 +18,7 @@
 
 #include "common/rle_bitmap.h"
 
+#include <cmath>
 #include <numeric>
 #include <vector>
 
@@ -167,7 +168,7 @@ std::vector<uint32_t> ComputeSparseSkipOffsets(
 
 }  // namespace
 
-RleBitmap::RleBitmap(const Bitmap64& bitmap, uint32_t skip_offsets_step) {
+RleBitmap::RleBitmap(const Bitmap64& bitmap) {
   std::vector<uint32_t> run_lengths;
   std::vector<uint32_t> bits;
   std::vector<uint32_t> skip_offsets;
@@ -180,10 +181,12 @@ RleBitmap::RleBitmap(const Bitmap64& bitmap, uint32_t skip_offsets_step) {
     run_lengths.clear();
     bits.clear();
     EncodeSparseRunLengths(bitmap, &run_lengths);
-    skip_offsets = ComputeSparseSkipOffsets(run_lengths, skip_offsets_step);
+    skip_offsets_step_ = std::sqrt(run_lengths.size());
+    skip_offsets = ComputeSparseSkipOffsets(run_lengths, skip_offsets_step_);
   } else {
     is_sparse_ = false;
-    skip_offsets = ComputeDenseSkipOffsets(run_lengths, skip_offsets_step);
+    skip_offsets_step_ = std::sqrt(run_lengths.size());
+    skip_offsets = ComputeDenseSkipOffsets(run_lengths, skip_offsets_step_);
   }
 
   // Write everything to a ByteBuffer.
@@ -194,7 +197,6 @@ RleBitmap::RleBitmap(const Bitmap64& bitmap, uint32_t skip_offsets_step) {
   size_ = bitmap.bits();
   PutVarint32(size_, &result);
   // ** Step of `skip_offsets`.
-  skip_offsets_step_ = skip_offsets_step;
   PutVarint32(skip_offsets_step_, &result);
   // ** Length of the `skip_offsets`.
   skip_offsets_size_ = skip_offsets.size();
