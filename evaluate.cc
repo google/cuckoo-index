@@ -82,11 +82,11 @@ int main(int argc, char* argv[]) {
     std::cerr << "You must specify --output_csv_path" << std::endl;
     std::exit(EXIT_FAILURE);
   }
-  const std::vector<std::string>
-      columns_to_test = absl::GetFlag(FLAGS_columns_to_test);
+  const std::vector<std::string> columns_to_test =
+      absl::GetFlag(FLAGS_columns_to_test);
   std::vector<size_t> num_rows_per_stripe_to_test;
   for (const std::string num_rows :
-      absl::GetFlag(FLAGS_num_rows_per_stripe_to_test)) {
+       absl::GetFlag(FLAGS_num_rows_per_stripe_to_test)) {
     num_rows_per_stripe_to_test.push_back(std::stoull(num_rows));
   }
   const size_t num_lookups = absl::GetFlag(FLAGS_num_lookups);
@@ -98,10 +98,12 @@ int main(int argc, char* argv[]) {
   if (input_csv_path.empty() || columns_to_test.empty()) {
     std::cerr
         << "[WARNING] --input_csv_path or --columns_to_test not specified, "
-           "generating synthetic data." << std::endl;
+           "generating synthetic data."
+        << std::endl;
     std::cout << "Generating " << generate_num_values << " values ("
-              << static_cast<double>(num_unique_values) / generate_num_values
-                  * 100 << "% unique)..." << std::endl;
+              << static_cast<double>(num_unique_values) / generate_num_values *
+                     100
+              << "% unique)..." << std::endl;
     table = ci::GenerateUniformData(generate_num_values, num_unique_values);
   } else {
     std::cout << "Loading data from file " << input_csv_path << "..."
@@ -129,12 +131,24 @@ int main(int argc, char* argv[]) {
       ci::CuckooAlgorithm::SKEWED_KICKING, ci::kMaxLoadFactor1SlotsPerBucket,
       /*scan_rate=*/0.001, /*slots_per_bucket=*/1,
       /*prefix_bits_optimization=*/false));
+  index_factories.push_back(
+      absl::make_unique<ci::PerStripeBloomComparableSizeFactory>(
+          absl::make_unique<ci::CuckooIndexFactory>(
+              ci::CuckooAlgorithm::SKEWED_KICKING,
+              ci::kMaxLoadFactor1SlotsPerBucket,
+              /*scan_rate=*/0.001, /*slots_per_bucket=*/1,
+              /*prefix_bits_optimization=*/false)));
   index_factories.push_back(absl::make_unique<ci::CuckooIndexFactory>(
       ci::CuckooAlgorithm::SKEWED_KICKING, ci::kMaxLoadFactor1SlotsPerBucket,
       /*scan_rate=*/0.01, /*slots_per_bucket=*/1,
       /*prefix_bits_optimization=*/false));
   index_factories.push_back(
-      absl::make_unique<ci::PerStripeBloomFactory>(/*num_bits_per_key=*/10));
+      absl::make_unique<ci::PerStripeBloomComparableSizeFactory>(
+          absl::make_unique<ci::CuckooIndexFactory>(
+              ci::CuckooAlgorithm::SKEWED_KICKING,
+              ci::kMaxLoadFactor1SlotsPerBucket,
+              /*scan_rate=*/0.01, /*slots_per_bucket=*/1,
+              /*prefix_bits_optimization=*/false)));
   index_factories.push_back(absl::make_unique<ci::PerStripeXorFactory>());
   index_factories.push_back(absl::make_unique<ci::ZoneMapFactory>());
 
