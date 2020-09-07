@@ -20,6 +20,7 @@
 #define CI_PER_STRIPE_BLOOM_H_
 
 #include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <iostream>
 #include <vector>
@@ -117,6 +118,62 @@ class PerStripeBloomFactory : public IndexStructureFactory {
   }
 
   const size_t num_bits_per_key_;
+};
+
+// A version of `PerStripeBloom` factory that allows to pass another filter's
+// factory in order to build a Bloom filter of a comparable size. This is
+// useful, e.g. when trying to compare scan rates of filters with roughly the
+// same size.
+class PerStripeBloomComparableSizeFactory : public IndexStructureFactory {
+ public:
+  explicit PerStripeBloomComparableSizeFactory(
+      std::unique_ptr<IndexStructureFactory> other_index_factory)
+      : other_index_factory_(std::move(other_index_factory)) {}
+  std::unique_ptr<IndexStructure> Create(
+      const Column& column, size_t num_rows_per_stripe) const override {
+    constexpr size_t kMaxBitsPerKey = 20;
+
+    IndexStructurePtr other_index =
+        other_index_factory_->Create(column, num_rows_per_stripe);
+    const size_t target_size = other_index->byte_size();
+
+    // Find the number of bits per key that minimizes the difference in size
+    // between the filters.
+    size_t argmin_num_bits_per_key;
+    size_t min_size_diff = std::numeric_limits<size_t>::max();
+    size_t min_bits = 1;
+    size_t max_bits = kMaxBitsPerKey;
+    while (min_bits <= max_bits) {
+      const size_t num_bits_per_key = (min_bits + max_bits) / 2;
+
+      auto bloom_index = absl::make_unique<PerStripeBloom>(
+          column.data(), num_rows_per_stripe, num_bits_per_key);
+      size_t abs_size_diff = target_size < bloom_index->byte_size()
+                                 ? bloom_index->byte_size() - target_size
+                                 : target_size - bloom_index->byte_size();
+
+      if (abs_size_diff < min_size_diff) {
+        min_size_diff = abs_size_diff;
+        argmin_num_bits_per_key = num_bits_per_key;
+      }
+
+      if (target_size < bloom_index->byte_size()) {
+        max_bits = num_bits_per_key - 1;
+      } else {
+        min_bits = num_bits_per_key + 1;
+      }
+    }
+
+    return absl::make_unique<PerStripeBloom>(column.data(), num_rows_per_stripe,
+                                             argmin_num_bits_per_key);
+  }
+
+  std::string index_name() const override {
+    return std::string("PerStripeBloomComparableSize/" +
+                       other_index_factory_->index_name());
+  }
+
+  std::unique_ptr<IndexStructureFactory> other_index_factory_;
 };
 
 }  // namespace ci
