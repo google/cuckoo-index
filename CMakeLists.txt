@@ -1,19 +1,26 @@
-project(CuckooIndex)
-
 cmake_minimum_required(VERSION 3.16)
+
+project(CuckooIndex)
 
 add_subdirectory(csv-parser)
 add_subdirectory(abseil-cpp)
 add_subdirectory(CRoaring)
 
 set(GOOGLETEST_VERSION 1.11.0)
-add_subdirectory(googletest/googletest ${CMAKE_CURRENT_BINARY_DIR}/googletest)
+#add_subdirectory(googletest/googletest ${CMAKE_CURRENT_BINARY_DIR}/googletest)
+
+add_subdirectory(googletest ${CMAKE_CURRENT_BINARY_DIR}/googletest)
+
+#add_subdirectory(googletest/googlemock)
 target_compile_definitions(gtest INTERFACE GTEST_HAS_POSIX_RE=0)
 
 add_library(data data.cc common/byte_coding)
 
+#target_include_directories(data PUBLIC common)
 target_include_directories(data PUBLIC abseil-cpp)
-target_include_directories(data PUBLIC CRoaring/include ./CRoaring/cpp csv-parser googletest/googletest googletest/googletest/include googletest/googlemock/include/)
+target_include_directories(data PUBLIC CRoaring/include ./CRoaring/cpp csv-parser)
+
+target_link_libraries(data absl::flat_hash_map absl::memory absl::random_random absl::strings csv)
 
 #add_compile_options(-std=c++17)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
@@ -47,10 +54,14 @@ include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
 #target_include_directories(data SYSTEM PUBLIC ${Boost_INCLUDE_DIRS})
 
-#target_link_libraries(data PUBLIC boost::math boost::multiprecision)
+add_library(data_test data_test.cc)
+target_include_directories(data_test PUBLIC googletest/googletest googletest/googletest/include googletest/googlemock/include/)
+target_link_libraries(data_test PUBLIC data gtest gmock)
 
-add_executable(data_test data_test.cc)
-#target_link_libraries(data_test PUBLIC data gtest_main)
-target_link_libraries(data_test PUBLIC data)
+
+
+
+
+
 
 
