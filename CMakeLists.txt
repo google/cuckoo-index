@@ -14,9 +14,10 @@ add_subdirectory(googletest ${CMAKE_CURRENT_BINARY_DIR}/googletest)
 #add_subdirectory(googletest/googlemock)
 target_compile_definitions(gtest INTERFACE GTEST_HAS_POSIX_RE=0)
 
-add_library(data data.cc common/byte_coding)
+add_library(data data.cc cuckoo_index.cc cuckoo_kicker.cc cuckoo_utils.cc common/byte_coding)
 
 #target_include_directories(data PUBLIC common)
+target_include_directories(data PUBLIC .)
 target_include_directories(data PUBLIC abseil-cpp)
 target_include_directories(data PUBLIC CRoaring/include ./CRoaring/cpp csv-parser)
 
