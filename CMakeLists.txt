@@ -5,7 +5,11 @@ cmake_minimum_required(VERSION 3.16)
 add_library(data data.cc common/byte_coding)
 
 target_include_directories(data PUBLIC abseil-cpp)
-target_include_directories(data PUBLIC CRoaring/include)
+target_include_directories(data PUBLIC CRoaring/include csv-parser)
+
+#add_compile_options(-std=c++17)
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+
 
 add_subdirectory(csv-parser)
 add_subdirectory(abseil-cpp)
