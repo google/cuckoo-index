@@ -50,7 +50,7 @@
 #include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
-#include "external/com_google_benchmark/_virtual_includes/benchmark/benchmark/benchmark.h"
+//#include "external/com_google_benchmark/_virtual_includes/benchmark/benchmark/benchmark.h"
 
 ABSL_FLAG(std::string, path, "", "Path to bitmap file.");
 

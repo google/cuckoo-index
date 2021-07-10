@@ -29,6 +29,8 @@
 #include "evaluation.pb.h"
 #include "roaring.hh"
 
+using namespace roaring; 
+
 namespace ci {
 
 // Writes `evaluation_results` to a CSV file at the given `path`.

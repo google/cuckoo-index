@@ -1,0 +1,74 @@
+bitmap_benchmark_test.cc: In function ‘std::vector<unsigned int> ci::{anonymous}::IndexesFromRoaring(const Roaring&)’:
+bitmap_benchmark_test.cc:72:38: error: passing ‘const Roaring’ as ‘this’ argument discards qualifiers [-fpermissive]
+   72 |   indexes.resize(roaring.cardinality());
+      |                                      ^
+In file included from bitmap_benchmark_test.cc:48:
+evaluation_utils.h:37:7: note:   in call to ‘int Roaring::cardinality()’
+   37 |   int cardinality();
+      |       ^~~~~~~~~~~
+bitmap_benchmark_test.cc:73:11: error: ‘const class Roaring’ has no member named ‘toUint32Array’
+   73 |   roaring.toUint32Array(indexes.data());
+      |           ^~~~~~~~~~~~~
+bitmap_benchmark_test.cc: In function ‘Roaring ci::{anonymous}::RoaringFromIndexes(const std::vector<unsigned int>&)’:
+bitmap_benchmark_test.cc:78:48: error: no matching function for call to ‘Roaring::Roaring(std::vector<unsigned int>::size_type, const unsigned int*)’
+   78 |   return Roaring(indexes.size(), indexes.data());
+      |                                                ^
+In file included from bitmap_benchmark_test.cc:48:
+evaluation_utils.h:38:3: note: candidate: ‘Roaring::Roaring(int, std::vector<unsigned int>)’
+   38 |   Roaring ( int size, std::vector<uint32_t> indexes) {
+      |   ^~~~~~~
+evaluation_utils.h:38:45: note:   no known conversion for argument 2 from ‘const unsigned int*’ to ‘std::vector<unsigned int>’
+   38 |   Roaring ( int size, std::vector<uint32_t> indexes) {
+      |                       ~~~~~~~~~~~~~~~~~~~~~~^~~~~~~
+evaluation_utils.h:32:7: note: candidate: ‘Roaring::Roaring(const Roaring&)’
+   32 | class Roaring {
+      |       ^~~~~~~
+evaluation_utils.h:32:7: note:   candidate expects 1 argument, 2 provided
+evaluation_utils.h:32:7: note: candidate: ‘Roaring::Roaring(Roaring&&)’
+evaluation_utils.h:32:7: note:   candidate expects 1 argument, 2 provided
+bitmap_benchmark_test.cc: In function ‘std::string ci::{anonymous}::RoaringToBytes(const Roaring&)’:
+bitmap_benchmark_test.cc:83:25: error: ‘const class Roaring’ has no member named ‘getSizeInBytes’
+   83 |   result.resize(roaring.getSizeInBytes(/*portable=*/false));
+      |                         ^~~~~~~~~~~~~~
+bitmap_benchmark_test.cc:84:11: error: ‘const class Roaring’ has no member named ‘write’
+   84 |   roaring.write(result.data());
+      |           ^~~~~
+bitmap_benchmark_test.cc: In function ‘Roaring ci::{anonymous}::RoaringFromBytes(const string&)’:
+bitmap_benchmark_test.cc:89:19: error: ‘readSafe’ is not a member of ‘Roaring’
+   89 |   return Roaring::readSafe(bytes.data(), bytes.size());
+      |                   ^~~~~~~~
+bitmap_benchmark_test.cc: In function ‘void ci::{anonymous}::BM_RoaringCompressFromBitmap(benchmark::State&)’:
+bitmap_benchmark_test.cc:145:13: error: no matching function for call to ‘Roaring::Roaring()’
+  145 |     Roaring roaring;
+      |             ^~~~~~~
+In file included from bitmap_benchmark_test.cc:48:
+evaluation_utils.h:38:3: note: candidate: ‘Roaring::Roaring(int, std::vector<unsigned int>)’
+   38 |   Roaring ( int size, std::vector<uint32_t> indexes) {
+      |   ^~~~~~~
+evaluation_utils.h:38:3: note:   candidate expects 2 arguments, 0 provided
+evaluation_utils.h:32:7: note: candidate: ‘Roaring::Roaring(const Roaring&)’
+   32 | class Roaring {
+      |       ^~~~~~~
+evaluation_utils.h:32:7: note:   candidate expects 1 argument, 0 provided
+evaluation_utils.h:32:7: note: candidate: ‘Roaring::Roaring(Roaring&&)’
+evaluation_utils.h:32:7: note:   candidate expects 1 argument, 0 provided
+bitmap_benchmark_test.cc:147:15: error: ‘class Roaring’ has no member named ‘add’
+  147 |       roaring.add(index);
+      |               ^~~
+bitmap_benchmark_test.cc: In function ‘void ci::{anonymous}::BM_RoaringDecompressToBitmap(benchmark::State&)’:
+bitmap_benchmark_test.cc:176:10: error: ‘RoaringSetBitForwardIterator’ was not declared in this scope; did you mean ‘roaring::RoaringSetBitForwardIterator’?
+  176 |     for (RoaringSetBitForwardIterator it = roaring.begin(); it != roaring.end();
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |          roaring::RoaringSetBitForwardIterator
+In file included from evaluation_utils.h:30,
+                 from bitmap_benchmark_test.cc:48:
+./CRoaring/cpp/roaring.hh:670:7: note: ‘roaring::RoaringSetBitForwardIterator’ declared here
+  670 | class RoaringSetBitForwardIterator final {
+      |       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+bitmap_benchmark_test.cc:176:61: error: ‘it’ was not declared in this scope; did you mean ‘int’?
+  176 |     for (RoaringSetBitForwardIterator it = roaring.begin(); it != roaring.end();
+      |                                                             ^~
+      |                                                             int
+bitmap_benchmark_test.cc:176:75: error: ‘const class Roaring’ has no member named ‘end’
+  176 |     for (RoaringSetBitForwardIterator it = roaring.begin(); it != roaring.end();
+      |                                                                           ^~~
