@@ -27,9 +27,9 @@
 #include "absl/types/span.h"
 #include "common/bitmap.h"
 #include "evaluation.pb.h"
-#include "roaring/roaring.h"
+#include "roaring.hh"
 
-using namespace roaring; 
+using namespace roaring;
 
 namespace ci {
 

@@ -2,19 +2,23 @@ project(CuckooIndex)
 
 cmake_minimum_required(VERSION 3.16)
 
+add_subdirectory(csv-parser)
+add_subdirectory(abseil-cpp)
+add_subdirectory(CRoaring)
+
+set(GOOGLETEST_VERSION 1.11.0)
+add_subdirectory(googletest/googletest ${CMAKE_CURRENT_BINARY_DIR}/googletest)
+target_compile_definitions(gtest INTERFACE GTEST_HAS_POSIX_RE=0)
+
 add_library(data data.cc common/byte_coding)
 
 target_include_directories(data PUBLIC abseil-cpp)
-target_include_directories(data PUBLIC CRoaring/include csv-parser)
+target_include_directories(data PUBLIC CRoaring/include ./CRoaring/cpp csv-parser googletest/googletest googletest/googletest/include googletest/googlemock/include/)
 
 #add_compile_options(-std=c++17)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 
-
-add_subdirectory(csv-parser)
-add_subdirectory(abseil-cpp)
-
-message("finding packages of boost")
+message("finding pagedckages of boost")
 
 set(Boost_USE_STATIC_LIBS        ON)  # only find static libs
 set(Boost_USE_DEBUG_LIBS         OFF) # ignore debug libs and 
