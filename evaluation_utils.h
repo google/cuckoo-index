@@ -27,7 +27,7 @@
 #include "absl/types/span.h"
 #include "common/bitmap.h"
 #include "evaluation.pb.h"
-#include "roaring.hh"
+#include "roaring/roaring.h"
 
 using namespace roaring; 
 

@@ -4,7 +4,11 @@ cmake_minimum_required(VERSION 3.16)
 
 add_library(data data.cc common/byte_coding)
 
+target_include_directories(data PUBLIC abseil-cpp)
+target_include_directories(data PUBLIC CRoaring/include)
+
 add_subdirectory(csv-parser)
+add_subdirectory(abseil-cpp)
 
 message("finding packages of boost")
 
@@ -21,15 +25,16 @@ message("finish finding boost packages")
 
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
-include(FetchContent)
-FetchContent_Declare(
-  absl
-  GIT_REPOSITORY https://github.com/abseil/abseil-cpp.git
-  #GIT_TAG xxxxx
-)
+#include(FetchContent)
+#FetchContent_Declare(
+#  absl
+#  GIT_REPOSITORY https://github.com/abseil/abseil-cpp.git
+#  #GIT_TAG xxxxx
+#)
 
-# CMake 3.14+
-FetchContent_MakeAvailable(absl)
+#
+## CMake 3.14+
+#FetchContent_MakeAvailable(absl)
 
 
 #target_include_directories(data SYSTEM PUBLIC ${Boost_INCLUDE_DIRS})
