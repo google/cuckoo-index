@@ -1,0 +1,19 @@
+In file included from fingerprint_store.h:29,
+                 from cuckoo_index.h:25,
+                 from cuckoo_index.cc:19:
+evaluation_utils.h:75:7: error: ‘BitmapStats’ in namespace ‘ci’ does not name a type
+   75 | ::ci::BitmapStats GetBitmapStats(const std::vector<Bitmap64Ptr>& bitmaps,
+      |       ^~~~~~~~~~~
+In file included from index_structure.h:26,
+                 from cuckoo_index.h:26,
+                 from cuckoo_index.cc:19:
+data.h: In static member function ‘static std::unique_ptr<ci::Table> ci::Table::FromCsv(const string&, std::vector<std::__cxx11::basic_string<char> >)’:
+data.h:301:28: error: ‘StrJoin’ is not a member of ‘absl’
+  301 |                   << absl::StrJoin(present_column_names, ",") << std::endl;
+      |                            ^~~~~~~
+In file included from cuckoo_index.h:26,
+                 from cuckoo_index.cc:19:
+index_structure.h: At global scope:
+index_structure.h:66:15: error: ‘BitmapStats’ in namespace ‘ci’ does not name a type
+   66 |   virtual ci::BitmapStats bitmap_stats() { return ci::BitmapStats(); }
+      |               ^~~~~~~~~~~

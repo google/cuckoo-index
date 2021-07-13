@@ -55,12 +55,18 @@ std::unique_ptr<Table> GenerateUniformData(const size_t generate_num_values,
   std::shuffle(values.begin(), values.end(), gen);
 
   // Create column & return table.
-  ColumnPtr column = ci::Column::IntColumn(absl::StrCat("uni_",
-                                                        generate_num_values
-                                                            / 1000,
-                                                        "K_val_",
-                                                        num_unique_values,
-                                                        "_uniq"), values);
+    std::stringstream column_name;
+    column_name << "uni_" << generate_num_values / 1000 << "K_val_" << num_unique_values << "_uniq";
+    //std::string column_name = ""
+//  ColumnPtr column = ci::Column::IntColumn(absl::StrCat("uni_",
+//                                                        generate_num_values
+//                                                            / 1000,
+//                                                        "K_val_",
+//                                                        num_unique_values,
+//                                                        "_uniq"), values);
+
+    ColumnPtr column = ci::Column::IntColumn(column_name.str(), values);
+
   std::vector<std::unique_ptr<ci::Column>> columns;
   columns.push_back(std::move(column));
   return ci::Table::Create(/*name=*/"", std::move(columns));

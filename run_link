@@ -1,0 +1,60 @@
+#! /usr/bin/bash 
+
+LDFLAGS="$LDFLAGS -Lbenchmark/build/src -lbenchmark"
+
+STEM=abseil-cpp/build/absl
+
+LDFLAGS="$LDFLAGS -L $STEM/base -labsl_base -labsl_exponential_biased -labsl_log_severity -labsl_malloc_internal -labsl_periodic_sampler -labsl_raw_logging_internal -labsl_scoped_set_env -labsl_spinlock_wait -labsl_strerror -labsl_throw_delegate"
+LDFLAGS="$LDFLAGS -L $STEM/container -labsl_hashtablez_sampler -labsl_raw_hash_set"
+LDFLAGS="$LDFLAGS -L $STEM/debugging -labsl_debugging_internal -labsl_demangle_internal -labsl_examine_stack -labsl_failure_signal_handler -labsl_leak_check -labsl_leak_check_disable -labsl_stacktrace -labsl_symbolize"
+LDFLAGS="$LDFLAGS -L $STEM/flags -labsl_flags -labsl_flags_commandlineflag -labsl_flags_commandlineflag_internal -labsl_flags_config -labsl_flags_internal -labsl_flags_marshalling -labsl_flags_parse -labsl_flags_private_handle_accessor -labsl_flags_program_name -labsl_flags_reflection -labsl_flags_usage"
+LDFLAGS="$LDFLAGS -labsl_flags_usage_internal"
+LDFLAGS="$LDFLAGS -L $STEM/hash -labsl_city -labsl_hash -labsl_wyhash"
+LDFLAGS="$LDFLAGS -L $STEM/numeric -labsl_int128"
+LDFLAGS="$LDFLAGS -L $STEM/random -labsl_random_distributions -labsl_random_internal_distribution_test_util -labsl_random_internal_platform -labsl_random_internal_pool_urbg -labsl_random_internal_randen -labsl_random_internal_randen_hwaes -labsl_random_internal_randen_hwaes_impl -labsl_random_internal_randen_slow -labsl_random_internal_seed_material -labsl_random_seed_gen_exception -labsl_random_seed_sequences"
+LDFLAGS="$LDFLAGS -L $STEM/status -labsl_status -labsl_statusor"
+LDFLAGS="$LDFLAGS -L $STEM/strings -labsl_cord -labsl_cordz_functions -labsl_cordz_handle -labsl_cordz_info -labsl_cordz_sample_token -labsl_cord_internal -labsl_strings -labsl_strings_internal -labsl_str_format_internal"
+LDFLAGS="$LDFLAGS -L $STEM/synchronization -labsl_graphcycles_internal -labsl_synchronization"
+LDFLAGS="$LDFLAGS -L $STEM/time -labsl_civil_time -labsl_time -labsl_time_zone"
+LDFLAGS="$LDFLAGS -L $STEM/types -labsl_bad_any_cast_impl -labsl_bad_optional_access -labsl_bad_variant_access"
+
+OBJS="bit_packing_benchmark.o profiling.o"
+LIBS=""
+
+
+
+g++ -o build_benchmark build_benchmark.o ${OBJS} ${LDFLSGS}  2>&1 | tee link.log
+
+exit
+
+# evaluate
+# lookup_benchmark
+STEM=./build/absl
+
+bit_packing_test.o
+bitmap_benchmark_test.o
+build_benchmark.o
+byte_coding_test.o
+cuckoo_index.o
+cuckoo_index_test.o
+cuckoo_kicker.o
+cuckoo_kicker_test.o
+cuckoo_utils.o
+cuckoo_utils_test.o
+data.o
+data_test.o
+evaluate.o
+evaluation.pb.o
+evaluation_utils.o
+evaluation_utils_test.o
+evaluator.o
+fingerprint_store.o
+fingerprint_store_test.o
+lookup_benchmark.o
+per_stripe_bloom_test.o
+per_stripe_xor_test.o
+profiling.o
+rle_bitmap.o
+rle_bitmap_test.o
+xor_filter_test.o
+zone_map_test.o
