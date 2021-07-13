@@ -299,8 +299,16 @@ std::unique_ptr<IndexStructure> CuckooIndexFactory::Create(
   distinct_values.reserve(value_to_bitmap.size());
   for (const auto& [value, _] : value_to_bitmap) distinct_values.insert(value);
 
+  std::cout << "CuckooIndexFactory::Create: num_rows_per_stripe: " << num_rows_per_stripe <<
+  ", column num rows: " << column.num_rows() <<
+  ", column size: " << column.data().size() <<
+  ", num distinct_values: "  << distinct_values.size() <<
+  ", max_load_factor_: " << max_load_factor_ << ", slots_per_bucket_ "<<  slots_per_bucket_ << std::endl;
+
   size_t num_buckets = GetMinNumBuckets(distinct_values.size(),
                                         slots_per_bucket_, max_load_factor_);
+
+  std::cout << "CuckooIndexFactory::Create: number of buckets: " << num_buckets << std::endl;
 
   std::vector<Bucket> buckets;
   {
@@ -354,8 +362,10 @@ std::unique_ptr<IndexStructure> CuckooIndexFactory::Create(
 }
 
 std::string CuckooIndexFactory::index_name() const {
-  return absl::StrCat("CuckooIndex:", cuckoo_alg_, ":", max_load_factor_, ":",
-                      scan_rate_);
+    return "CuckooIndex:" + std::to_string(static_cast<int>(cuckoo_alg_)) + ":" + std::to_string(max_load_factor_) + ":" +  std::to_string(scan_rate_);
+
+//  return absl::StrCat("CuckooIndex:", cuckoo_alg_, ":", max_load_factor_, ":",
+//                      scan_rate_);
 }
 
 }  // namespace ci

@@ -104,11 +104,14 @@ void WriteToCsv(const std::string path,
 
   for (const EvaluationResults& result : evaluation_results) {
     std::vector<std::string> base_row = {
-        absl::CEscape(result.index_structure()),
+        //absl::CEscape(result.index_structure()),
+        result.index_structure(),
         absl::StrCat(result.num_rows_per_stripe()),
         absl::StrCat(result.num_stripes()),
-        absl::CEscape(result.column_name()),
-        absl::CEscape(result.column_type()),
+        //absl::CEscape(result.column_name()),
+        result.column_name(),
+        //absl::CEscape(result.column_type()),
+        result.column_type(),
         absl::StrCat(result.column_cardinality()),
         absl::StrCat(result.column_compressed_size_bytes()),
         absl::StrCat(result.index_size_bytes()),
@@ -131,7 +134,8 @@ void WriteToCsv(const std::string path,
       std::vector<std::string> test_case_row = base_row;
       test_case_row.insert(test_case_row.end(),
                            {
-                               absl::CEscape(test_case.name()),
+                               //absl::CEscape(test_case.name()),
+                               test_case.name(),
                                absl::StrCat(test_case.num_lookups()),
                                absl::StrCat(test_case.num_false_positives()),
                                absl::StrCat(test_case.num_true_negatives()),
