@@ -26,6 +26,10 @@ cc_library(
     hdrs = [
         "data.h",
     ],
+    data = [
+        # Put your csv files here, e.g.
+        # "Vehicle__Snowmobile__and_Boat_Registrations.csv"
+    ],
     deps = [
         ":evaluation_utils",
         "//common:byte_coding",
