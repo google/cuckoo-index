@@ -42,6 +42,19 @@ Cuckoo Index addresses both of these drawbacks of per-partition filters.
 
 Prepare a dataset in a CSV format that you are going to use. One of the datasets we used was DMV [Vehicle, Snowmobile, and Boat Registrations](https://catalog.data.gov/dataset/vehicle-snowmobile-and-boat-registrations).
 
+```
+wget -c https://data.ny.gov/api/views/w4pv-hbkt/rows.csv -O Vehicle__Snowmobile__and_Boat_Registrations.csv
+```
+
+Add the file to the `data` dependencies in the `BUILD.bazel` file.
+
+```
+data = [
+    # Put your csv files here
+    "Vehicle__Snowmobile__and_Boat_Registrations.csv"
+],
+```
+
 For footprint experiments, run the following command, specifying the path to the data file, columns to test, and the tests to run.
 
 ```

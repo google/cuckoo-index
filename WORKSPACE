@@ -66,9 +66,9 @@ boost_deps()
 # Protocol buffers.
 http_archive(
     name = "com_google_protobuf",
-    sha256 = "c5fd8f99f0d30c6f9f050bf008e021ccc70d7645ac1f64679c6038e07583b2f3",
-    strip_prefix = "protobuf-d0bfd5221182da1a7cc280f3337b5e41a89539cf",
-    urls = ["https://github.com/protocolbuffers/protobuf/archive/d0bfd5221182da1a7cc280f3337b5e41a89539cf.zip"],
+    sha256 = "65e020a42bdab44a66664d34421995829e9e79c60e5adaa08282fd14ca552f57",
+    strip_prefix = "protobuf-3.15.6",
+    urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.15.6.tar.gz"],
 )
 
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
