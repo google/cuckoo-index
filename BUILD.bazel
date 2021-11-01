@@ -373,6 +373,10 @@ cc_binary(
     name = "lookup_benchmark",
     testonly = 1,
     srcs = ["lookup_benchmark.cc"],
+    data = [
+        # Put your csv files here, e.g.
+        # "Vehicle__Snowmobile__and_Boat_Registrations.csv"
+    ],
     deps = [
         ":cuckoo_index",
         ":cuckoo_utils",

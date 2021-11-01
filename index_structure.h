@@ -34,7 +34,7 @@ class IndexStructure {
   IndexStructure() {}
   virtual ~IndexStructure() {}
 
-  // Returns true iff the stripe with `stripe_id` contains the given `value`.
+  // Returns true if the stripe with `stripe_id` contains the given `value`.
   virtual bool StripeContains(size_t stripe_id, int value) const = 0;
 
   // Returns a bitmap indicating possibly qualifying stripes for the given
