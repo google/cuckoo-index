@@ -21,7 +21,7 @@
 //
 // To run the benchmark run:
 // bazel run -c opt --cxxopt='-std=c++17' --dynamic_mode=off :lookup_benchmark
-// -- --input_file_path='...' --columns_to_test='A,B,C'
+// -- --input_csv_path='...' --columns_to_test='A,B,C'
 //
 // Example run:
 // Run on (80 X 3900 MHz CPU s)

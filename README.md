@@ -59,7 +59,7 @@ For footprint experiments, run the following command, specifying the path to the
 
 ```
 bazel run -c opt --cxxopt="-std=c++17" :evaluate -- \
-  --input_file_path="Vehicle__Snowmobile__and_Boat_Registrations.csv" \
+  --input_csv_path="Vehicle__Snowmobile__and_Boat_Registrations.csv" \
   --columns_to_test="City,Zip,Color" \
   --test_cases="positive_uniform,positive_distinct,positive_zipf,negative,mixed" \
   --output_csv_path="results.csv"
@@ -71,7 +71,7 @@ For lookup performance experiments, run the following command, specifying the pa
 
 ```
 bazel run -c opt --cxxopt='-std=c++17' --dynamic_mode=off :lookup_benchmark -- \
-  --input_file_path="Vehicle__Snowmobile__and_Boat_Registrations.csv" \
+  --input_csv_path="Vehicle__Snowmobile__and_Boat_Registrations.csv" \
   --columns_to_test="City,Zip,Color"
 ```
 
