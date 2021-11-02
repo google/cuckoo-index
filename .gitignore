@@ -1,3 +1,16 @@
+# Bazel build output
 bazel-*
-Vehicle__Snowmobile__and_Boat_Registrations.csv
+
+# CMake build output
+build/
+
+# IDE files
 .idea/
+.vscode/
+
+# Generated protocol buffer sources
+*.pb.cc
+*.pb.h
+
+# Data
+Vehicle__Snowmobile__and_Boat_Registrations.csv

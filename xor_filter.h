@@ -23,7 +23,7 @@
 #include <vector>
 
 #include "absl/strings/str_cat.h"
-#include "xor_singleheader/include/xorfilter.h"
+#include "include/xorfilter.h"
 
 namespace ci {
 
