@@ -215,7 +215,7 @@ std::string Encode(const FingerprintStore& fingerprint_store,
 
   // Flag that denotes whether we use the prefix bits optimization. If set, the
   // flag is followed by the prefix bits bitmap.
-  PutPrimitive(true, &result);
+  PutPrimitive(prefix_bits_optimization, &result);
   if (prefix_bits_optimization) {
     // Encode prefix bits bitmap as RleBitmap (util::bitmap::DenseEncode() needs
     // significantly more space in sparse cases).
