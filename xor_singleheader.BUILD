@@ -23,5 +23,4 @@ package(default_visibility = ["//visibility:public"])
 cc_library(
   name = "xorfilter",
   hdrs = ["include/xorfilter.h"],
-  include_prefix = "xor_singleheader",
 )

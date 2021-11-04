@@ -1,0 +1,19 @@
+include(FetchContent)
+set(FETCHCONTENT_QUIET ON)
+set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
+set(BUILD_SHARED_LIBS OFF)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+find_package(Git REQUIRED)
+
+SET(LEVELDB_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+SET(LEVELDB_BUILD_BENCHMARKS OFF CACHE BOOL "" FORCE)
+SET(LEVELDB_INSTALL ON CACHE BOOL "" FORCE)
+FetchContent_Declare(
+        leveldb
+        GIT_REPOSITORY "https://github.com/google/leveldb.git"
+        GIT_TAG 78b39d68c15ba020c0d60a3906fb66dbf1697595
+        PATCH_COMMAND ""
+)
+FetchContent_MakeAvailable(leveldb)
+FetchContent_GetProperties(leveldb SOURCE_DIR LEVELDB_INCLUDE_DIR)
+include_directories(${LEVELDB_INCLUDE_DIR})

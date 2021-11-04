@@ -75,6 +75,12 @@ bazel run -c opt --cxxopt='-std=c++17' --dynamic_mode=off :lookup_benchmark -- \
   --columns_to_test="City,Zip,Color"
 ```
 
+## CMake support
+
+**NOTE** CMake support is community-based. The maintainers do not use CMake internally.
+
+For further information have a look at the [cmake README](cmake/README.md).
+
 ## Code Organization
 
 #### Evaluation Framework
