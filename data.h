@@ -261,7 +261,7 @@ class Column {
   const std::vector<std::string> str_data_;
 
   // Stats.
-  std::size_t min_, max_;
+  int min_, max_;
   // Standard moments: mean, variance, skewness, and excess kurtosis.
   // https://www.gnu.org/software/gsl/doc/html/statistics.html
   double mean_, variance_, skewness_, kurtosis_;
